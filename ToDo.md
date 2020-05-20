@@ -9,7 +9,7 @@ Verificar se a solucao é otima, isto é se existem coeficientes negativos na eq
 4. Choose pivot column and pivot row
 5. Choose pivot number
 6. Method to create tables at each iteration (a list of tables maybe?)
-7.
+7. Minimizaton method (-1 * Z)
 8.
 9.
 10.
