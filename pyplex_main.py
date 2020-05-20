@@ -1,5 +1,6 @@
 import platform  # For getting the operating system name
 import subprocess  # For executing a shell command
+import numpy as np
 
 """
 Equation options
@@ -13,6 +14,11 @@ EQUATION_OPTIONS = (
 	(LESS_THEN, '<='),
 )
 
+
+# Creates an matrix/table with zeros 
+def create_matrix(num_col, num_rows):
+	table = np.zeros((num_rows, num_col))
+	return table
 
 def clear_screen():
 	"""
