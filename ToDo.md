@@ -19,3 +19,6 @@ Second Release
 2. Re-create table function with float items
 3. Minimize method
 
+Third Release
+1. Big M method (when you have '=' on constraints)
+
