@@ -11,8 +11,6 @@ Verificar se a solucao é otima, isto é se existem coeficientes negativos na eq
 6. Method to create tables at each iteration (a list of tables maybe?)
 7. Minimizaton method (-1 * Z)
 8.
-9.
-10.
 
 Second Release
 1. Change input integer to float
