@@ -21,7 +21,7 @@ EQUATION_OPTIONS = (
 class PyplexTableau():
 
 	def __init__(self, number_decisions, number_constraints, variables, constraints):
-		self.table = np.zeros(number_constraints + 1, number_decisions + number_decisions + 1)
+		self.table = np.full((number_constraints + 1, number_decisions + number_decisions + 1),0)
 		# Inserting data
 		self.table[0] = variables
 		for i in range(len(constraints)):
@@ -83,7 +83,7 @@ class PyplexSolver():
 
 # Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
-	table = np.zeros((num_rows, num_col))
+	table = np.full((num_rows, num_col),0)
 	return table
 
 def clear_screen():
@@ -177,13 +177,17 @@ def print_help_parameters():
 
 
 def create_empty_matrix(rows, cols):
-	table = np.zeros((rows, cols))
+	table = np.full((rows, cols),0)
 	return table
 
 
 def generate_first_table(dec_vars, const, result):
 	# First row is the obj. function
-	first_row = np.append(dec_vars,np.zeros(len(const)+1))
+	# deci_vars = np.array(dec_vars)
+	# deci_vars *= -1
+
+	first_row = np.append(dec_vars,np.full((1,len(const)+1),0))
+	first_row *= -1
 	# Creates a matrix with the constraints coef.
 	const_var = np.array(const)
 	# Generates the slacks matriz
