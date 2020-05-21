@@ -15,7 +15,72 @@ EQUATION_OPTIONS = (
 )
 
 
-# Creates an matrix/table with zeros 
+class PyplexSolver():
+
+	def __init__(self, ):
+		# Holds the table for all the iterations (for debug and verbose purpose)
+		self.simplex_iter = list()
+		self.pivot = 0
+		self.max_min = 'max'
+
+	class PyplexTableau():
+
+		def __init__(self, number_decisions, number_constraints, decisions, constraints):
+			self.table = np.zeros(number_constraints+1, number_decisions+number_decisions+1)
+			# Inserting data
+			self.table[0] = decisions
+			for i in range(len(constraints)):
+				self.table[i+1]=constraints[i]
+			self.table_columns = list()
+			self.table_rows = list()
+
+		def __str__(self):
+			return self.table
+
+		def print_tableau(self):
+			self.num_rows = self.table.shape[0]
+			self.num_columns = self.table.shape[1]
+			# Columns names
+			print('\t'.join(self.table_columns))
+			for r in range(self.sum_rows):
+				print(self.table_rows[i] + ' ')
+				column = ''
+				for c in range(self.num_columns):
+					column += self.table[i][j] + '\t'
+				print(column)
+
+
+
+
+	def exec_minimize(self):
+		print('Minimize')
+		# Z*-1
+		# exec_maximize
+
+	def exec_maximize(self):
+		print('Maximize')
+
+	def print_results(self):
+		clear_screen()
+		print("Results:")
+
+	def create_table(self):
+
+		pass
+		# return numpy table
+
+	def exec_solver(self, decision_vars, constraint_vars, max_min='max'):
+
+
+		if max_min.lower() == 'min':
+			self.exec_minimize()
+		else:
+			self.exec_maximize()
+
+
+
+
+# Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
 	table = np.zeros((num_rows, num_col))
 	return table
@@ -45,25 +110,27 @@ def print_equation_options():
 	eq_options = eq_options[:-2]
 	print(eq_options)
 
-def maximize():
-	pass
-
 
 # if __name__ == "__main__":
 # 	print_equation_options()
+def read_decision_vars():
+	decisionVars = list()
+
+	# Read from the user decision variables
+	numDecisionVar = int(input("Number of decision variables in the problem: "))
+	for i in range(numDecisionVar):
+		value = int(input("Value of Decision Variable X{}: ".format(i + 1)))
+		decisionVars.update({'X{}'.format(i + 1): value})
+	return decisionVars
 
 if __name__ == "__main__":
 
 	welcome_message()
 
-	decisionVars = dict()
+	decisionVars = list()
 	constraintVars = list()
 
-	# Determine Variables and Constraints
-	numDecisionVar = int(input("Number of decision variables in the problem: "))
-	for i in range(numDecisionVar):
-		value = int(input("Value of Decision Variable X{}: ".format(i+1)))
-		decisionVars.update({'X{}'.format(i+1) : value})
+	decisionVars = read_decision_vars()
 
 	obj_function = ''
 	for i in decisionVars:

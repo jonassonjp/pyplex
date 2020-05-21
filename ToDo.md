@@ -3,6 +3,8 @@ Features to be implemented
 
 Verificar se a solucao é otima, isto é se existem coeficientes negativos na equacao Z
 
+Prepare the overall structure and create new branch for each functionality
+
 1. Prepare objective function (times -1)
 2. Add slack variables (variáveis de folga) to constraints
 3. Create the first table (matrix) with inputed elements
@@ -19,4 +21,5 @@ Second Release
 
 Third Release
 1. Big M method (when you have '=' on constraints)
+2. Read values from text file (see np.loadtxt())
 
