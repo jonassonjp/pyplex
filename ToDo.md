@@ -4,6 +4,7 @@ Features to be implemented
 Verificar se a solucao é otima, isto é se existem coeficientes negativos na equacao Z
 
 Prepare the overall structure and create new branch for each functionality
+- Change the user input data. Pass as parameters.
 
 1. Prepare objective function (times -1)
 2. Add slack variables (variáveis de folga) to constraints

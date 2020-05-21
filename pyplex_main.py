@@ -17,18 +17,13 @@ EQUATION_OPTIONS = (
 
 class PyplexSolver():
 
-	def __init__(self, ):
-		# Holds the table for all the iterations (for debug and verbose purpose)
-		self.simplex_iter = list()
-		self.pivot = 0
-		self.max_min = 'max'
 
 	class PyplexTableau():
 
-		def __init__(self, number_decisions, number_constraints, decisions, constraints):
+		def __init__(self, number_decisions, number_constraints, variables, constraints):
 			self.table = np.zeros(number_constraints+1, number_decisions+number_decisions+1)
 			# Inserting data
-			self.table[0] = decisions
+			self.table[0] = variables
 			for i in range(len(constraints)):
 				self.table[i+1]=constraints[i]
 			self.table_columns = list()
@@ -49,6 +44,11 @@ class PyplexSolver():
 					column += self.table[i][j] + '\t'
 				print(column)
 
+	def __init__(self, ):
+		# Holds the table for all the iterations (for debug and verbose purpose)
+		self.simplex_iter = list()
+		self.pivot = 0
+		self.max_min = 'max'
 
 
 
@@ -70,7 +70,6 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, decision_vars, constraint_vars, max_min='max'):
-
 
 		if max_min.lower() == 'min':
 			self.exec_minimize()
@@ -114,7 +113,7 @@ def print_equation_options():
 # if __name__ == "__main__":
 # 	print_equation_options()
 def read_decision_vars():
-	decisionVars = list()
+	decisionVars = dict()
 
 	# Read from the user decision variables
 	numDecisionVar = int(input("Number of decision variables in the problem: "))
@@ -123,30 +122,26 @@ def read_decision_vars():
 		decisionVars.update({'X{}'.format(i + 1): value})
 	return decisionVars
 
-if __name__ == "__main__":
 
-	welcome_message()
-
-	decisionVars = list()
-	constraintVars = list()
-
-	decisionVars = read_decision_vars()
-
+def print_decision_vars(vars):
 	obj_function = ''
-	for i in decisionVars:
-		obj_function += '{}{}'.format(decisionVars[i], i) + ' + '
+	for i in vars:
+		obj_function += '{}{}'.format(vars[i], i) + ' + '
 
 	# removes last plus sigh and extra space character
 	obj_function = obj_function[:-2]
 	print('\tObjective Function: '+obj_function)
 
-	numConstraints = int(input("\nNumber of constraints: "))
 
-	clear_screen()
+def read_constraintis(num_decision_var):
+	print('Constraint Variables:')
+	numConstraints = int(input("\nNumber of constraints: "))
+	constraint_list = list()
+
 	for i in range(numConstraints):
 		constraint = list()
 		print('Constraints #{}: '.format(i+1))
-		for i in range(numDecisionVar):
+		for i in range(num_decision_var):
 			value = int(input("\tValue of X{}: ".format(i + 1)))
 			constraint.append(value)
 		print_equation_options()
@@ -156,12 +151,30 @@ if __name__ == "__main__":
 		constraint.append(value)
 
 		# Adds a single constraint to a list of constraints
-		constraintVars.append(constraint)
+		constraint_list.append(constraint)
+	return constraint_list
 
-	print('Constraint Variables:')
-	print(decisionVars)
 
-	clear_screen()
+def print_constraints(constraints):
+	for con in constraints:
+		single_constraint = ''
+		for j in range(len(con)):
+			single_constraint += '{}X{} + '.format(con[j], j+1)
+		single_constraint = single_constraint[:-2]
+		print(single_constraint)
+
+if __name__ == "__main__":
+
+	welcome_message()
+
+	decision_variables = list()
+	constraint_list = list()
+
+	decision_variables = read_decision_vars()
+	print_decision_vars(decision_variables)
+
+	constraint_list= read_constraintis(len(decision_variables))
+	print_constraints(constraint_list)
 
 
 
