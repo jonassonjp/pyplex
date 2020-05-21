@@ -47,12 +47,31 @@ class PyplexTableau():
 
 class PyplexSolver():
 
-	def __init__(self, ):
+	def __init__(self, first_table, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
+		self.simplex_iter.append(first_table)
 		self.pivot = 0
-		self.max_min = 'max'
+		self.max_min = max_min
+		# if true will print every iteration
+		self.verbose = verb
 
+
+	# Returns the index of the minimum value of the first row/line
+	def next_pivot_column(self, table):
+		next_pvt = np.where(table[0] == np.min(table[0]))
+		# import pdb
+		# pdb.set_trace()
+		# return next_pvt[0][0] if len(next_pvt) > 1 else -1
+		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
+
+	def next_pivot_row(self, table, pivot_col):
+		line_pivot =
+		next_pvt = np.where(table[0] == np.min(table[0]))
+		# import pdb
+		# pdb.set_trace()
+		# return next_pvt[0][0] if len(next_pvt) > 1 else -1
+		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 	def exec_minimize(self):
 		print('Minimize')
@@ -61,24 +80,26 @@ class PyplexSolver():
 
 	def exec_maximize(self):
 		print('Maximize')
+		print(self.simplex_iter[0])
+		pivot_c = self.next_pivot_column(self.simplex_iter[0])
+		print('Pivot Column: {}'.format(pivot_c))
+		pivot_r = self.next_pivot_row(self.simplex_iter[0])
+		print('Pivot Row: {}'.format(pivot_r))
+
 
 	def print_results(self):
 		clear_screen()
 		print("Results:")
 
 	def create_table(self):
-
 		pass
 		# return numpy table
 
-	def exec_solver(self, decision_vars, constraint_vars, max_min='max'):
-
-		if max_min.lower() == 'min':
+	def exec_solver(self, ):
+		if self.max_min.lower() == 'min':
 			self.exec_minimize()
 		else:
 			self.exec_maximize()
-
-
 
 
 # Creates an matrix/table with zeros
@@ -206,13 +227,17 @@ if __name__ == "__main__":
 	constraints_matrix = []
 	result_equation = []
 	type_obj_function = ''
+	verbose = False
 
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hd:A:r:t:", ["d=", "A=", "r=", "t="])
+		options, args = getopt.getopt(argv, "hd:A:r:t:v", ["d=", "A=", "r=", "t=", "v"])
 	except getopt.GetoptError:
-		print('pyplex.py -d <vector-decision_variables> -A <constraints-matrix> -r <vector> -t <obj_func_type>')
+		print(
+				'pyplex.py -d <vector-decision_variables> -A <constraints-matrix> -r <vector> -t <obj_func_type> ' +
+				'-v <verbose-True-False>'
+		)
 		sys.exit(2)
 	for opt, arg in options:
 		if opt == '-h':
@@ -226,6 +251,9 @@ if __name__ == "__main__":
 			result_equation = ast.literal_eval(arg)
 		elif opt in ("-t"):
 			type_obj_function = arg.strip()
+		elif opt in ("-v"):
+			verbose = arg.strip()
+
 
 	if not decision_vars or not constraints_matrix or not result_equation:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
@@ -236,13 +264,10 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	# print_decision_vars(decision_vars)
-	print(decision_vars)
-
-	# init_table = create_empty_matrix(len(matrix_A)+1, len(decision_vars)+)
 	init_table = generate_first_table(decision_vars,constraints_matrix,result_equation)
-	print(init_table)
-	# my_solver = PyplexSolver()
+
+	my_solver = PyplexSolver(init_table,type_obj_function,verbose)
+	my_solver.exec_solver()
 
 
 # b = np.array([(1.5,2,3), (4,5,6)], dtype = float)

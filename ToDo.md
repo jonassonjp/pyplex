@@ -13,7 +13,7 @@ Prepare the overall structure and create new branch for each functionality
 5. Choose pivot number
 6. Method to create tables at each iteration (a list of tables maybe?)
 7. Minimizaton method (-1 * Z)
-8.
+8. Transfer the create table method to the inside of Pyplex class
 
 Second Release
 1. Change input integer to float
