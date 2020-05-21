@@ -1,6 +1,9 @@
 import platform  # For getting the operating system name
 import subprocess  # For executing a shell command
 import numpy as np
+import sys, ast, getopt
+
+# import ast, getopt, sys, copy, os
 
 """
 Equation options
@@ -15,41 +18,40 @@ EQUATION_OPTIONS = (
 )
 
 
+class PyplexTableau():
+
+	def __init__(self, number_decisions, number_constraints, variables, constraints):
+		self.table = np.zeros(number_constraints + 1, number_decisions + number_decisions + 1)
+		# Inserting data
+		self.table[0] = variables
+		for i in range(len(constraints)):
+			self.table[i + 1] = constraints[i]
+		self.table_columns = list()
+		self.table_rows = list()
+
+	def __str__(self):
+		return self.table
+
+	def print_tableau(self):
+		self.num_rows = self.table.shape[0]
+		self.num_columns = self.table.shape[1]
+		# Columns names
+		print('\t'.join(self.table_columns))
+		for r in range(self.sum_rows):
+			print(self.table_rows[i] + ' ')
+			column = ''
+			for c in range(self.num_columns):
+				column += self.table[i][j] + '\t'
+			print(column)
+
+
 class PyplexSolver():
-
-
-	class PyplexTableau():
-
-		def __init__(self, number_decisions, number_constraints, variables, constraints):
-			self.table = np.zeros(number_constraints+1, number_decisions+number_decisions+1)
-			# Inserting data
-			self.table[0] = variables
-			for i in range(len(constraints)):
-				self.table[i+1]=constraints[i]
-			self.table_columns = list()
-			self.table_rows = list()
-
-		def __str__(self):
-			return self.table
-
-		def print_tableau(self):
-			self.num_rows = self.table.shape[0]
-			self.num_columns = self.table.shape[1]
-			# Columns names
-			print('\t'.join(self.table_columns))
-			for r in range(self.sum_rows):
-				print(self.table_rows[i] + ' ')
-				column = ''
-				for c in range(self.num_columns):
-					column += self.table[i][j] + '\t'
-				print(column)
 
 	def __init__(self, ):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
 		self.pivot = 0
 		self.max_min = 'max'
-
 
 
 	def exec_minimize(self):
@@ -163,21 +165,100 @@ def print_constraints(constraints):
 		single_constraint = single_constraint[:-2]
 		print(single_constraint)
 
+
+def print_help_parameters():
+	print('Options are')
+	print('pyplex.py -d <vector-decision_variables> -A <matrix-constraints> -r <vector> -t <obj_func_type>')
+	print('\th: Prints this help')
+	print('\td: Objective function coefficients')
+	print('\tA: Matrix of the constraints (coefficients)')
+	print('\tr: Result of the constraints equation (Ax <= r )')
+	print('\tt: Type of objective function (max or min)')
+
+
+def create_empty_matrix(rows, cols):
+	table = np.zeros((rows, cols))
+	return table
+
+
+def generate_first_table(dec_vars, const, result):
+	# First row is the obj. function
+	first_row = np.append(dec_vars,np.zeros(len(const)+1))
+	# Creates a matrix with the constraints coef.
+	const_var = np.array(const)
+	# Generates the slacks matriz
+	slacks_var = np.eye(len(const))
+	# Join both the
+	table = np.column_stack((const_var, slacks_var))
+	# Attach the result at the far end column
+	table1 = np.column_stack((table, result))
+	return np.vstack((first_row, table1))
+
+
 if __name__ == "__main__":
 
 	welcome_message()
+	decision_vars = []
+	constraints_matrix = []
+	result_equation = []
+	type_obj_function = ''
 
-	decision_variables = list()
-	constraint_list = list()
+	# First argument is the application's name (pyplex.py)
+	argv = sys.argv[1:]
+	try:
+		options, args = getopt.getopt(argv, "hd:A:r:t:", ["d=", "A=", "r=", "t="])
+	except getopt.GetoptError:
+		print('pyplex.py -d <vector-decision_variables> -A <constraints-matrix> -r <vector> -t <obj_func_type>')
+		sys.exit(2)
+	for opt, arg in options:
+		if opt == '-h':
+			print_help_parameters()
+			sys.exit()
+		elif opt in ("-d"):
+			decision_vars = ast.literal_eval(arg)
+		elif opt in ("-A"):
+			constraints_matrix = ast.literal_eval(arg)
+		elif opt in ("-r"):
+			result_equation = ast.literal_eval(arg)
+		elif opt in ("-t"):
+			type_obj_function = arg.strip()
 
-	decision_variables = read_decision_vars()
-	print_decision_vars(decision_variables)
+	if not decision_vars or not constraints_matrix or not result_equation:
+		print('Insufficient or invalid parameters. Please provide correct arguments.')
+		print_help_parameters()
+		sys.exit()
 
-	constraint_list= read_constraintis(len(decision_variables))
-	print_constraints(constraint_list)
+	# If not provided, the we assume that is maximization
+	if type_obj_function not in ('max', 'min'):
+		type_obj_function = 'max'
+
+	# print_decision_vars(decision_vars)
+	print(decision_vars)
+
+	# init_table = create_empty_matrix(len(matrix_A)+1, len(decision_vars)+)
+	init_table = generate_first_table(decision_vars,constraints_matrix,result_equation)
+	print(init_table)
+	# my_solver = PyplexSolver()
 
 
+# b = np.array([(1.5,2,3), (4,5,6)], dtype = float)
+# Matrix com variaveis de folga
+# g = np.eye(3)
+# np.column_stack((d, g))
 
+
+	#
+	# decision_variables = list()
+	# constraint_list = list()
+	#
+	# decision_variables = read_decision_vars()
+	# print_decision_vars(decision_variables)
+	#
+	# constraint_list= read_constraintis(len(decision_variables))
+	# print_constraints(constraint_list)
+
+# number_col=len(tabela[0,:])
+# number_row=len(tabela[:,0])
 
 # m = gen_matrix(2,2)
 # constrain(m,'2,-1,G,10')
