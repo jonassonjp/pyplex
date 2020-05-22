@@ -57,34 +57,53 @@ class PyplexSolver():
 		self.verbose = verb
 
 
-	# Returns the index of the minimum value of the first row/line
+	def div_array(self, array1, array2):
+		with np.errstate(divide='ignore', invalid='ignore'):
+			divided_array = np.true_divide(array1, array2)
+			divided_array[~ np.isfinite(divided_array)] = 0  # -inf inf NaN
+			divided_array[divided_array == -0] = 0
+		return divided_array
+
+
 	def next_pivot_column(self, table):
+		"""
+		Returns the index (coeficient) of the minimum value of the first row/line
+		"""
 		next_pvt = np.where(table[0] == np.min(table[0]))
 		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 	def next_pivot_row(self, table, pivot_col):
+		"""
+		Returns the index (coeficient) the next pivot row/line
+		"""
 		column_pivot = np.array(table[0:, pivot_col], dtype=float)
-		# Returns the last column, the result column
+
+		# Grab the result column (the last column in our table)
 		column_r = np.array(table[0:, -1:], dtype=float)
 		column_r_trans = column_r.transpose()
-		with np.errstate(divide='ignore', invalid='ignore'):
-			pivot_line = np.true_divide(column_r_trans, column_pivot)
-			pivot_line[~ np.isfinite(pivot_line)] = 0  # -inf inf NaN
-			pivot_line[pivot_line == -0] = 0
 
+		pivot_line = self.div_array(column_r_trans, column_pivot)
 		value = np.min(pivot_line[np.nonzero(pivot_line)])
 		next_pvt = np.where(pivot_line[0] == value)
 		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
-		# #np.min(c[np.nonzero(c)])
-		#
-		#
-		# #np.divide(cr,cp, out=np.zeros(cr.shape, dtype=float), where=cp!=0)
-		# # np.where(line_pivot[0] == np.min(line_pivot[0]))
-		# # import pdb
-		# # pdb.set_trace()
-		# # return next_pvt[0][0] if len(next_pvt) > 1 else -1
-		# return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
+
+	def next_round_tab(self, table, pivot_col_coef, pivot_row_coef):
+		new_table = table
+		num_rows=len(table[:,0])
+		num_cols = len(table[0, :])
+		pivot_line = np.array(table[pivot_row_coef], dtype=float)
+		for i in range(num_rows):
+			# Creates an array with only pivot coef.
+			pivot_coef = np.full((1, num_cols), table[i][pivot_col_coef], dtype=float)
+			new_line = table[i]-(np.multiply(pivot_coef, pivot_line))
+			new_table[i] = new_line
+
+		# Restore original value for the pivot line
+		new_table[pivot_row_coef] = pivot_line
+
+		return new_table
+
 
 	def exec_minimize(self):
 		print('Minimize')
@@ -92,12 +111,48 @@ class PyplexSolver():
 		# exec_maximize
 
 	def exec_maximize(self):
-		print('Maximize')
+		# Number of columns
+		number_col=len(self.simplex_iter[0][0,:])
+		# number_row=len(tabela[:,0])
+		if self.verbose: print('Maximize')
 		print(self.simplex_iter[0])
+
+
+		# Discover the pivot column
 		pivot_c = self.next_pivot_column(self.simplex_iter[0])
 		print('Pivot Column: {}'.format(pivot_c))
-		pivot_r = self.next_pivot_row(self.simplex_iter[0], pivot_c)
-		print('Pivot Row: {}'.format(pivot_r))
+		i =0
+		while pivot_c >= 0:
+			# Discover the pivot row
+			pivot_r = self.next_pivot_row(self.simplex_iter[i], pivot_c)
+			print('Pivot Row: {}'.format(pivot_r))
+
+			# Discover the pivot number
+			self.pivot_number = self.simplex_iter[i][pivot_r][pivot_c]
+			print('Pivot Number: {}'.format(self.pivot_number))
+
+			# Create the new table
+			table = self.simplex_iter[i].copy()
+			print("Next Iteration: ")
+			print(table)
+
+			# Divide the new line by the pivot number
+			new_pivot_line = self.div_array(table[pivot_r],np.full((1,number_col), self.pivot_number, dtype=float))
+			# table[pivot_r] = new_pivot_line
+			print("New pivot line: {}".format(new_pivot_line))
+
+			table = self.next_round_tab(table, pivot_c, pivot_r)
+			print("Table: ")
+			print(table)
+			self.simplex_iter.append(table)
+			i += 1
+			# Discover the pivot column
+			pivot_c = self.next_pivot_column(self.simplex_iter[i])
+			print('Pivot Column: {}'.format(pivot_c))
+
+
+
+
 
 
 	def print_results(self):
@@ -113,6 +168,14 @@ class PyplexSolver():
 			self.exec_minimize()
 		else:
 			self.exec_maximize()
+		clear_screen()
+		print("Results\n")
+		print("Matriz original:")
+		print(self.simplex_iter[0])
+		for i in range(1, len(self.simplex_iter)):
+			print("Iteration #{}".format(i))
+			print(self.simplex_iter[i])
+
 
 
 # Creates an matrix/table with zeros
@@ -216,10 +279,12 @@ def create_empty_matrix(rows, cols):
 
 
 def generate_first_table(dec_vars, const, result):
-	# First row is the obj. function
-	# deci_vars = np.array(dec_vars)
-	# deci_vars *= -1
+	"""
+		Generate the first table with all the values
+		First row is the obj. function
+	"""
 
+	# Appends 0 to the rest of the line
 	first_row = np.append(dec_vars,np.full((1,len(const)+1),0))
 	first_row *= -1
 	# Creates a matrix with the constraints coef.
@@ -240,7 +305,7 @@ if __name__ == "__main__":
 	constraints_matrix = []
 	result_equation = []
 	type_obj_function = ''
-	verbose = False
+	verbose = True
 
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
@@ -266,7 +331,6 @@ if __name__ == "__main__":
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
 			verbose = arg.strip()
-
 
 	if not decision_vars or not constraints_matrix or not result_equation:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
