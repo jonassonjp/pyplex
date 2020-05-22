@@ -51,7 +51,7 @@ class PyplexSolver():
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
 		self.simplex_iter.append(first_table)
-		self.pivot = 0
+		self.pivot_number = 0
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
@@ -73,7 +73,8 @@ class PyplexSolver():
 			pivot_line[pivot_line == -0] = 0
 
 		value = np.min(pivot_line[np.nonzero(pivot_line)])
-		return value
+		next_pvt = np.where(pivot_line[0] == value)
+		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 		# #np.min(c[np.nonzero(c)])
 		#
@@ -97,6 +98,7 @@ class PyplexSolver():
 		print('Pivot Column: {}'.format(pivot_c))
 		pivot_r = self.next_pivot_row(self.simplex_iter[0], pivot_c)
 		print('Pivot Row: {}'.format(pivot_r))
+
 
 	def print_results(self):
 		clear_screen()
