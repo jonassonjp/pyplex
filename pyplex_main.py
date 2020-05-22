@@ -60,18 +60,30 @@ class PyplexSolver():
 	# Returns the index of the minimum value of the first row/line
 	def next_pivot_column(self, table):
 		next_pvt = np.where(table[0] == np.min(table[0]))
-		# import pdb
-		# pdb.set_trace()
-		# return next_pvt[0][0] if len(next_pvt) > 1 else -1
 		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 	def next_pivot_row(self, table, pivot_col):
-		line_pivot =
-		next_pvt = np.where(table[0] == np.min(table[0]))
-		# import pdb
-		# pdb.set_trace()
-		# return next_pvt[0][0] if len(next_pvt) > 1 else -1
-		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
+		column_pivot = np.array(table[0:, pivot_col], dtype=float)
+		# Returns the last column, the result column
+		column_r = np.array(table[0:, -1:], dtype=float)
+		column_r_trans = column_r.transpose()
+		with np.errstate(divide='ignore', invalid='ignore'):
+			pivot_line = np.true_divide(column_r_trans, column_pivot)
+			pivot_line[~ np.isfinite(pivot_line)] = 0  # -inf inf NaN
+			pivot_line[pivot_line == -0] = 0
+
+		value = np.min(pivot_line[np.nonzero(pivot_line)])
+		return value
+
+		# #np.min(c[np.nonzero(c)])
+		#
+		#
+		# #np.divide(cr,cp, out=np.zeros(cr.shape, dtype=float), where=cp!=0)
+		# # np.where(line_pivot[0] == np.min(line_pivot[0]))
+		# # import pdb
+		# # pdb.set_trace()
+		# # return next_pvt[0][0] if len(next_pvt) > 1 else -1
+		# return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 	def exec_minimize(self):
 		print('Minimize')
@@ -83,9 +95,8 @@ class PyplexSolver():
 		print(self.simplex_iter[0])
 		pivot_c = self.next_pivot_column(self.simplex_iter[0])
 		print('Pivot Column: {}'.format(pivot_c))
-		pivot_r = self.next_pivot_row(self.simplex_iter[0])
+		pivot_r = self.next_pivot_row(self.simplex_iter[0], pivot_c)
 		print('Pivot Row: {}'.format(pivot_r))
-
 
 	def print_results(self):
 		clear_screen()
