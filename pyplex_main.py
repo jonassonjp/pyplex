@@ -47,15 +47,33 @@ class PyplexTableau():
 
 class PyplexSolver():
 
-	def __init__(self, first_table, max_min='max', verb=False):
+	def __init__(self,  dec_vars, const, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		self.simplex_iter.append(first_table)
+		first_tableau = self.generate_first_tableau(dec_vars,const,result)
+		self.simplex_iter.append(first_tableau)
 		self.pivot_number = 0
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
 
+	def generate_first_tableau(self, dec_vars, const, result):
+		"""
+			Generate the first table with all the values
+			First row is the obj. function
+		"""
+		# Appends 0 to the rest of the line
+		first_row = np.append(dec_vars, np.full((1, len(const) + 1), 0))
+		first_row *= -1
+		# Creates a matrix with the constraints coef.
+		const_var = np.array(const)
+		# Generates the slacks matrix
+		slacks_var = np.eye(len(const))
+		# Join both the constraints and slacks variables
+		table = np.column_stack((const_var, slacks_var))
+		# Attach the result at the far end column
+		table1 = np.column_stack((table, result))
+		return np.vstack((first_row, table1))
 
 	def div_array(self, array1, array2):
 		with np.errstate(divide='ignore', invalid='ignore'):
@@ -92,7 +110,7 @@ class PyplexSolver():
 		# Search this line minus the first element, Z value
 		search_pivot_line = np.delete(pivot_line, 0)
 
-		#Todo Implementar se tiver empate, se tiver mais de um valor minimum
+		# ToDo Implementar se tiver empate, se tiver mais de um valor minimum
 
 		# Value is the minimum value excluding the first value which is Z line
 		value = np.min(search_pivot_line[np.nonzero(search_pivot_line)])
@@ -184,6 +202,7 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, ):
+
 		if self.max_min.lower() == 'min':
 			self.exec_minimize()
 		else:
@@ -195,8 +214,6 @@ class PyplexSolver():
 		for i in range(1, len(self.simplex_iter)):
 			print("Iteration #{}".format(i))
 			print(self.simplex_iter[i])
-
-
 
 # Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
@@ -298,24 +315,7 @@ def create_empty_matrix(rows, cols):
 	return table
 
 
-def generate_first_table(dec_vars, const, result):
-	"""
-		Generate the first table with all the values
-		First row is the obj. function
-	"""
 
-	# Appends 0 to the rest of the line
-	first_row = np.append(dec_vars,np.full((1,len(const)+1),0))
-	first_row *= -1
-	# Creates a matrix with the constraints coef.
-	const_var = np.array(const)
-	# Generates the slacks matrix
-	slacks_var = np.eye(len(const))
-	# Join both the constraints and slacks variables
-	table = np.column_stack((const_var, slacks_var))
-	# Attach the result at the far end column
-	table1 = np.column_stack((table, result))
-	return np.vstack((first_row, table1))
 
 
 if __name__ == "__main__":
@@ -361,9 +361,7 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	init_table = generate_first_table(decision_vars,constraints_matrix,result_equation)
-
-	my_solver = PyplexSolver(init_table,type_obj_function,verbose)
+	my_solver = PyplexSolver(decision_vars,constraints_matrix,result_equation,type_obj_function,verbose)
 	my_solver.exec_solver()
 
 
