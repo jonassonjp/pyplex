@@ -21,9 +21,10 @@ EQUATION_OPTIONS = (
 class PyplexTableau():
 
 	def __init__(self, number_decisions, number_constraints):
-		self.table = np.full((number_constraints + 1, number_decisions + number_decisions + 1),0)
-		self.num_rows = self.table.shape[0]
-		self.num_columns = self.table.shape[1]
+		self.table = np.full((number_constraints + 1, number_decisions + number_constraints + 1),0)
+		# self.num_rows = self.table.shape[0]
+		self.num_rows = np.size(self.table, 0)
+		self.num_columns = np. size(self.table, 1)
 		self.table_columns_names = list()
 		self.table_rows_names = list()
 
@@ -33,12 +34,13 @@ class PyplexTableau():
 	def print_tableau(self):
 
 		# Columns names
-		print('\t'.join(self.table_columns_names))
+		print('\t' + '\t'.join(self.table_columns_names))
+		column = ''
 		for r in range(self.num_rows):
-			print(self.table_rows_names[r] + ' ')
-			column = ''
+			# print(self.table_rows_names[r], end='')
+			column = self.table_rows_names[r] + '\t'
 			for c in range(self.num_columns):
-				column += self.table[r][c] + '\t'
+				column = column + str(self.table[r][c]) + '\t'
 			print(column)
 
 
@@ -60,13 +62,16 @@ class PyplexSolver():
 			First row is the obj. function
 		"""
 		tableau = PyplexTableau(len(dec_vars),len(const))
-		tableau.table_columns_names.append('Z')
-		tableau.table_columns_names.append(['X{}'.format(x) for x in range(1, len(dec_vars)+2)])
-		tableau.table_columns_names.append(['F{}'.format(x) for x in range(1, len(const)+2)])
-		tableau.table_columns_names.append('R')
+		tableau.table_rows_names.append('Z')
+		for x in range(1, len(dec_vars)+1):
+			tableau.table_columns_names.append('X{}'.format(x))
 
-		print(tableau.table_columns_names)
-		tableau.table_rows_names.append(['F{}'.format(x) for x in range(1,len(const)+2)])
+		for x in range(1, len(const)+1):
+			tableau.table_columns_names.append('F{}'.format(x))
+			tableau.table_rows_names.append('F{}'.format(x))
+
+		tableau.table_columns_names.append('R')
+		tableau.print_tableau()
 
 
 		# Appends 0 to the rest of the line
@@ -199,7 +204,6 @@ class PyplexSolver():
 			print('Pivot Column: {}'.format(pivot_c))
 
 
-
 	def print_results(self):
 		clear_screen()
 		print("Results:")
@@ -209,7 +213,6 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, ):
-
 		if self.max_min.lower() == 'min':
 			self.exec_minimize()
 		else:
@@ -218,9 +221,11 @@ class PyplexSolver():
 		print("Results\n")
 		print("Matriz original:")
 		print(self.simplex_iter[0])
+		#self.simplex_iter[0].print_tableau()
 		for i in range(1, len(self.simplex_iter)):
 			print("Iteration #{}".format(i))
 			print(self.simplex_iter[i])
+			# self.simplex_iter[i].print_tableau()
 
 # Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
