@@ -20,28 +20,25 @@ EQUATION_OPTIONS = (
 
 class PyplexTableau():
 
-	def __init__(self, number_decisions, number_constraints, variables, constraints):
+	def __init__(self, number_decisions, number_constraints):
 		self.table = np.full((number_constraints + 1, number_decisions + number_decisions + 1),0)
-		# Inserting data
-		self.table[0] = variables
-		for i in range(len(constraints)):
-			self.table[i + 1] = constraints[i]
-		self.table_columns = list()
-		self.table_rows = list()
+		self.num_rows = self.table.shape[0]
+		self.num_columns = self.table.shape[1]
+		self.table_columns_names = list()
+		self.table_rows_names = list()
 
 	def __str__(self):
 		return self.table
 
 	def print_tableau(self):
-		self.num_rows = self.table.shape[0]
-		self.num_columns = self.table.shape[1]
+
 		# Columns names
-		print('\t'.join(self.table_columns))
-		for r in range(self.sum_rows):
-			print(self.table_rows[i] + ' ')
+		print('\t'.join(self.table_columns_names))
+		for r in range(self.num_rows):
+			print(self.table_rows_names[r] + ' ')
 			column = ''
 			for c in range(self.num_columns):
-				column += self.table[i][j] + '\t'
+				column += self.table[r][c] + '\t'
 			print(column)
 
 
@@ -62,6 +59,16 @@ class PyplexSolver():
 			Generate the first table with all the values
 			First row is the obj. function
 		"""
+		tableau = PyplexTableau(len(dec_vars),len(const))
+		tableau.table_columns_names.append('Z')
+		tableau.table_columns_names.append(['X{}'.format(x) for x in range(1, len(dec_vars)+2)])
+		tableau.table_columns_names.append(['F{}'.format(x) for x in range(1, len(const)+2)])
+		tableau.table_columns_names.append('R')
+
+		print(tableau.table_columns_names)
+		tableau.table_rows_names.append(['F{}'.format(x) for x in range(1,len(const)+2)])
+
+
 		# Appends 0 to the rest of the line
 		first_row = np.append(dec_vars, np.full((1, len(const) + 1), 0))
 		first_row *= -1
