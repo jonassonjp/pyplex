@@ -60,8 +60,8 @@ class PyplexSolver():
 	def div_array(self, array1, array2):
 		with np.errstate(divide='ignore', invalid='ignore'):
 			divided_array = np.true_divide(array1, array2)
-			divided_array[~ np.isfinite(divided_array)] = 0  # -inf inf NaN
-			divided_array[divided_array == -0] = 0
+			divided_array[~ np.isfinite(divided_array)] = 0  # remove -inf inf NaN
+			divided_array[divided_array == -0] = 0   # remove -0
 		return divided_array
 
 
@@ -70,29 +70,45 @@ class PyplexSolver():
 		Returns the index (coeficient) of the minimum value of the first row/line
 		"""
 		next_pvt = np.where(table[0] == np.min(table[0]))
+		# rever essa condicao aqui
+		# valor precisa ser > 0
 		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
-	def next_pivot_row(self, table, pivot_col):
+	def next_pivot_row(self, table, pivot_col_coef):
 		"""
-		Returns the index (coeficient) the next pivot row/line
+			Returns the index (coeficient) the next pivot row/line
+			The next pivot row is the lowest number of the division of the result column (last)
+			by the pivot column, BUT, we have to exclude the Z elements of both arrays.
 		"""
-		column_pivot = np.array(table[0:, pivot_col], dtype=float)
+		#ToDo refactor: pass only the array insted of whole table
+		pivot_column = np.array(table[0:, pivot_col_coef], dtype=float)
 
 		# Grab the result column (the last column in our table)
 		column_r = np.array(table[0:, -1:], dtype=float)
 		column_r_trans = column_r.transpose()
 
-		pivot_line = self.div_array(column_r_trans, column_pivot)
-		value = np.min(pivot_line[np.nonzero(pivot_line)])
+		pivot_line = self.div_array(column_r_trans, pivot_column)
+
+		# Search this line minus the first element, Z value
+		search_pivot_line = np.delete(pivot_line, 0)
+
+		#Todo Implementar se tiver empate, se tiver mais de um valor minimum
+
+		# Value is the minimum value excluding the first value which is Z line
+		value = np.min(search_pivot_line[np.nonzero(search_pivot_line)])
+
 		next_pvt = np.where(pivot_line[0] == value)
+
 		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 
-	def next_round_tab(self, table, pivot_col_coef, pivot_row_coef):
+	def next_round_tab(self, table, pivot_col_coef, pivot_row_coef, pivot_number):
 		new_table = table
 		num_rows=len(table[:,0])
 		num_cols = len(table[0, :])
 		pivot_line = np.array(table[pivot_row_coef], dtype=float)
+		pivot_numb_array=np.full((1, num_cols),pivot_number, dtype=float)
+		pivot_line = np.divide(pivot_line, pivot_numb_array)
 		for i in range(num_rows):
 			# Creates an array with only pivot coef.
 			pivot_coef = np.full((1, num_cols), table[i][pivot_col_coef], dtype=float)
@@ -105,6 +121,12 @@ class PyplexSolver():
 		return new_table
 
 
+	def check_negative_value_z(self, elements):
+		"""
+			Checks if the Z's row elements has negative values. Is so, returns True, otherwise False
+		"""
+		return True if len(elements[elements < 0]) > 0 else False
+
 	def exec_minimize(self):
 		print('Minimize')
 		# Z*-1
@@ -114,15 +136,16 @@ class PyplexSolver():
 		# Number of columns
 		number_col=len(self.simplex_iter[0][0,:])
 		# number_row=len(tabela[:,0])
-		if self.verbose: print('Maximize')
-		print(self.simplex_iter[0])
 
-
-		# Discover the pivot column
-		pivot_c = self.next_pivot_column(self.simplex_iter[0])
-		print('Pivot Column: {}'.format(pivot_c))
+		print('Maximize')
 		i =0
-		while pivot_c >= 0:
+		while self.check_negative_value_z(self.simplex_iter[i][0]):
+
+			if self.verbose: print(self.simplex_iter[i])
+			# Discover the pivot column
+			pivot_c = self.next_pivot_column(self.simplex_iter[i])
+			print('Pivot Column: {}'.format(pivot_c))
+
 			# Discover the pivot row
 			pivot_r = self.next_pivot_row(self.simplex_iter[i], pivot_c)
 			print('Pivot Row: {}'.format(pivot_r))
@@ -141,7 +164,7 @@ class PyplexSolver():
 			# table[pivot_r] = new_pivot_line
 			print("New pivot line: {}".format(new_pivot_line))
 
-			table = self.next_round_tab(table, pivot_c, pivot_r)
+			table = self.next_round_tab(table, pivot_c, pivot_r, self.pivot_number)
 			print("Table: ")
 			print(table)
 			self.simplex_iter.append(table)
@@ -149,9 +172,6 @@ class PyplexSolver():
 			# Discover the pivot column
 			pivot_c = self.next_pivot_column(self.simplex_iter[i])
 			print('Pivot Column: {}'.format(pivot_c))
-
-
-
 
 
 
@@ -289,9 +309,9 @@ def generate_first_table(dec_vars, const, result):
 	first_row *= -1
 	# Creates a matrix with the constraints coef.
 	const_var = np.array(const)
-	# Generates the slacks matriz
+	# Generates the slacks matrix
 	slacks_var = np.eye(len(const))
-	# Join both the
+	# Join both the constraints and slacks variables
 	table = np.column_stack((const_var, slacks_var))
 	# Attach the result at the far end column
 	table1 = np.column_stack((table, result))
@@ -379,3 +399,10 @@ if __name__ == "__main__":
 # constrain(m,'-9,7,L,42')
 # obj(m,'2,7,0')
 # print(minz(m))
+#
+# for i in range(1, alunos + 1):
+#     nota = input("Coloque a nota do aluno " + str(i) + ":" )
+#     notas.append(nota)
+
+#Como dividir por zero - testar
+# c = np.divide(a, b, out=np.zeros_like(a), where=b != 0)
