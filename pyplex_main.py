@@ -20,7 +20,7 @@ EQUATION_OPTIONS = (
 
 class PyplexTableau():
 
-	def __init__(self, number_decisions, number_constraints):
+	def __init__(self, number_decisions=0, number_constraints=0):
 		self.table = np.full((number_constraints + 1, number_decisions + number_constraints + 1),0)
 		# self.num_rows = self.table.shape[0]
 		self.num_rows = np.size(self.table, 0)
@@ -30,6 +30,16 @@ class PyplexTableau():
 
 	def __str__(self):
 		return self.table
+
+	def copy(self):
+		new_tableau = PyplexTableau()
+		new_tableau.table = self.table.copy()
+		new_tableau.num_columns = self.num_columns
+		new_tableau.num_rows = self.num_rows
+		new_tableau.table_columns_names = self.table_columns_names
+		new_tableau.table_rows_names = self.table_rows_names
+		return new_tableau
+
 
 	def print_tableau(self):
 
@@ -71,21 +81,21 @@ class PyplexSolver():
 			tableau.table_rows_names.append('F{}'.format(x))
 
 		tableau.table_columns_names.append('R')
-		tableau.print_tableau()
-
 
 		# Appends 0 to the rest of the line
 		first_row = np.append(dec_vars, np.full((1, len(const) + 1), 0))
+		# Row Z * -1
 		first_row *= -1
 		# Creates a matrix with the constraints coef.
 		const_var = np.array(const)
 		# Generates the slacks matrix
 		slacks_var = np.eye(len(const))
 		# Join both the constraints and slacks variables
-		table = np.column_stack((const_var, slacks_var))
+		tableau.table = np.column_stack((const_var, slacks_var))
 		# Attach the result at the far end column
-		table1 = np.column_stack((table, result))
-		return np.vstack((first_row, table1))
+		table1 = np.column_stack((tableau.table, result))
+		tableau.table = np.vstack((first_row, table1))
+		return tableau
 
 	def div_array(self, array1, array2):
 		with np.errstate(divide='ignore', invalid='ignore'):
@@ -132,23 +142,27 @@ class PyplexSolver():
 		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
 
 
-	def next_round_tab(self, table, pivot_col_coef, pivot_row_coef, pivot_number):
-		new_table = table
-		num_rows=len(table[:,0])
-		num_cols = len(table[0, :])
+	def next_round_tab(self, tableau, pivot_col_coef, pivot_row_coef, pivot_number):
+		next_tableau = tableau
+		table = tableau.table
+		num_rows = next_tableau.num_rows
+		num_cols = next_tableau.num_columns
+		# num_rows = len(table[:,0])
+		# num_cols = len(table[0, :])
 		pivot_line = np.array(table[pivot_row_coef], dtype=float)
-		pivot_numb_array=np.full((1, num_cols),pivot_number, dtype=float)
+		pivot_numb_array = np.full((1, num_cols),pivot_number, dtype=float)
 		pivot_line = np.divide(pivot_line, pivot_numb_array)
 		for i in range(num_rows):
 			# Creates an array with only pivot coef.
 			pivot_coef = np.full((1, num_cols), table[i][pivot_col_coef], dtype=float)
 			new_line = table[i]-(np.multiply(pivot_coef, pivot_line))
-			new_table[i] = new_line
+			table[i] = new_line
 
 		# Restore original value for the pivot line
-		new_table[pivot_row_coef] = pivot_line
-
-		return new_table
+		table[pivot_row_coef] = pivot_line
+		next_tableau.table = table
+		next_tableau.table_rows_names[pivot_row_coef] = tableau.table_columns_names[pivot_col_coef]
+		return next_tableau
 
 
 	def check_negative_value_z(self, elements):
@@ -158,55 +172,59 @@ class PyplexSolver():
 		return True if len(elements[elements < 0]) > 0 else False
 
 	def exec_minimize(self):
-		print('Minimize')
-		# Z*-1
-		# exec_maximize
+		print('Minimize Under constrtuction')
+
 
 	def exec_maximize(self):
 		# Number of columns
-		number_col=len(self.simplex_iter[0][0,:])
+		number_col=self.simplex_iter[0].num_columns
 		# number_row=len(tabela[:,0])
 
 		print('Maximize')
 		i =0
-		while self.check_negative_value_z(self.simplex_iter[i][0]):
+		while self.check_negative_value_z(self.simplex_iter[i].table[0]):
 
-			if self.verbose: print(self.simplex_iter[i])
+			if self.verbose: print(self.simplex_iter[i].print_tableau())
 			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i])
-			print('Pivot Column: {}'.format(pivot_c))
+			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
+			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
 
 			# Discover the pivot row
-			pivot_r = self.next_pivot_row(self.simplex_iter[i], pivot_c)
-			print('Pivot Row: {}'.format(pivot_r))
+			pivot_r = self.next_pivot_row(self.simplex_iter[i].table, pivot_c)
+			if self.verbose: print('Pivot Row: {}'.format(pivot_r))
 
 			# Discover the pivot number
-			self.pivot_number = self.simplex_iter[i][pivot_r][pivot_c]
-			print('Pivot Number: {}'.format(self.pivot_number))
+			self.pivot_number = self.simplex_iter[i].table[pivot_r][pivot_c]
+			if self.verbose: print('Pivot Number: {}'.format(self.pivot_number))
 
-			# Create the new table
-			table = self.simplex_iter[i].copy()
-			print("Next Iteration: ")
-			print(table)
+			# Create the new tableau
+			new_tableau = self.simplex_iter[i].copy()
+			if self.verbose:
+				print("Next Iteration: ")
+				self.simplex_iter[i].print_tableau()
 
 			# Divide the new line by the pivot number
-			new_pivot_line = self.div_array(table[pivot_r],np.full((1,number_col), self.pivot_number, dtype=float))
+			new_pivot_line = self.div_array(new_tableau.table[pivot_r],np.full((1,number_col), self.pivot_number, dtype=float))
 			# table[pivot_r] = new_pivot_line
-			print("New pivot line: {}".format(new_pivot_line))
+			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
 
-			table = self.next_round_tab(table, pivot_c, pivot_r, self.pivot_number)
-			print("Table: ")
-			print(table)
-			self.simplex_iter.append(table)
+			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, self.pivot_number)
+			if self.verbose:
+				print("Table: ")
+				self.simplex_iter[i].print_tableau()
+
+			self.simplex_iter.append(new_tableau)
 			i += 1
 			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i])
-			print('Pivot Column: {}'.format(pivot_c))
+			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
+			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
 
 
 	def print_results(self):
 		clear_screen()
-		print("Results:")
+		print('=' * 30)
+		print('\tR E S U L T S')
+		print('=' * 30)
 
 	def create_table(self):
 		pass
@@ -220,11 +238,11 @@ class PyplexSolver():
 		clear_screen()
 		print("Results\n")
 		print("Matriz original:")
-		print(self.simplex_iter[0])
+		print(self.simplex_iter[0].print_tableau())
 		#self.simplex_iter[0].print_tableau()
 		for i in range(1, len(self.simplex_iter)):
 			print("Iteration #{}".format(i))
-			print(self.simplex_iter[i])
+			print(self.simplex_iter[i].print_tableau())
 			# self.simplex_iter[i].print_tableau()
 
 # Creates an matrix/table with zeros
