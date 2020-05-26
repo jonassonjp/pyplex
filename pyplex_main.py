@@ -50,7 +50,7 @@ class PyplexTableau():
 			# print(self.table_rows_names[r], end='')
 			column = self.table_rows_names[r] + '\t'
 			for c in range(self.num_columns):
-				column = column + str(self.table[r][c]) + '\t'
+				column = column + '{:.2f}'.format(self.table[r][c]) + '\t'
 			print(column)
 
 
@@ -130,16 +130,17 @@ class PyplexSolver():
 		pivot_line = self.div_array(column_r_trans, pivot_column)
 
 		# Search this line minus the first element, Z value
-		search_pivot_line = np.delete(pivot_line, 0)
-
-		# ToDo Implementar se tiver empate, se tiver mais de um valor minimum
+		pivot_line_minus_Z = np.delete(pivot_line, 0)
 
 		# Value is the minimum value excluding the first value which is Z line
-		value = np.min(search_pivot_line[np.nonzero(search_pivot_line)])
+		value = np.min(pivot_line_minus_Z[np.nonzero(pivot_line_minus_Z)])
 
 		next_pvt = np.where(pivot_line[0] == value)
 
-		return next_pvt[0][0] if len(next_pvt[0]) >= 1 else -1
+		# In case there is a draw (more then one minimum value) return the minor coefficient
+		next_pvt = np.min(next_pvt)
+
+		return next_pvt
 
 
 	def next_round_tab(self, tableau, pivot_col_coef, pivot_row_coef, pivot_number):
@@ -204,7 +205,10 @@ class PyplexSolver():
 				self.simplex_iter[i].print_tableau()
 
 			# Divide the new line by the pivot number
-			new_pivot_line = self.div_array(new_tableau.table[pivot_r],np.full((1,number_col), self.pivot_number, dtype=float))
+			new_pivot_line = self.div_array(
+					new_tableau.table[pivot_r],
+					np.full((1,number_col), self.pivot_number, dtype=float)
+			)
 			# table[pivot_r] = new_pivot_line
 			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
 
@@ -311,7 +315,7 @@ def read_constraintis(num_decision_var):
 			value = int(input("\tValue of X{}: ".format(i + 1)))
 			constraint.append(value)
 		print_equation_options()
-		eq_option=int(input())
+		eq_option = int(input())
 		constraint.append(eq_option)
 		value = int(input("Value of equation: "))
 		constraint.append(value)
@@ -343,9 +347,6 @@ def print_help_parameters():
 def create_empty_matrix(rows, cols):
 	table = np.full((rows, cols),0)
 	return table
-
-
-
 
 
 if __name__ == "__main__":
