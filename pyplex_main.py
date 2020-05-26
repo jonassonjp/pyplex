@@ -222,6 +222,13 @@ class PyplexSolver():
 		print('\tR E S U L T S')
 		print('=' * 30)
 
+		print("Matriz original:")
+		print(self.simplex_iter[0].print_tableau())
+		for i in range(1, len(self.simplex_iter)):
+			print("Iteration #{}".format(i))
+			print(self.simplex_iter[i].print_tableau())
+		print('Total Iterations: {}'.format(len(self.simplex_iter)))
+
 	def create_table(self):
 		pass
 		# return numpy table
@@ -231,15 +238,7 @@ class PyplexSolver():
 			self.exec_minimize()
 		else:
 			self.exec_maximize()
-		clear_screen()
-		print("Results\n")
-		print("Matriz original:")
-		print(self.simplex_iter[0].print_tableau())
-		#self.simplex_iter[0].print_tableau()
-		for i in range(1, len(self.simplex_iter)):
-			print("Iteration #{}".format(i))
-			print(self.simplex_iter[i].print_tableau())
-			# self.simplex_iter[i].print_tableau()
+		self.print_results()
 
 # Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
