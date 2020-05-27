@@ -223,11 +223,12 @@ class PyplexSolver():
 		print('=' * 30)
 
 		print("Matriz original:")
-		print(self.simplex_iter[0].print_tableau())
+		self.simplex_iter[0].print_tableau()
 		for i in range(1, len(self.simplex_iter)):
-			print("Iteration #{}".format(i))
-			print(self.simplex_iter[i].print_tableau())
-		print('Total Iterations: {}'.format(len(self.simplex_iter)))
+			print("\nIteration #{}".format(i))
+			self.simplex_iter[0].print_tableau()
+		# First entry of simplex_iter is the initial tableau, so it does'nt count.
+		print('Total Iterations: {}'.format(len(self.simplex_iter)-1))
 
 	def create_table(self):
 		pass
