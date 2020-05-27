@@ -228,8 +228,9 @@ class PyplexSolver():
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
 
 
-	def print_optimal_solution(self, final_tableau):
+	def print_optimal_solution(self):
 
+		final_tableau = self.simplex_iter[-1]
 		dec_vars_list = final_tableau.table_rows_names
 		# Grab all the desicion variables from the last tableau
 		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
@@ -254,7 +255,7 @@ class PyplexSolver():
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
 		print('Total Iterations: {}'.format(len(self.simplex_iter)))
 		print('\nOptimal Solution: ')
-		self.print_optimal_solution(self.simplex_iter[-1])
+		self.print_optimal_solution()
 
 	def create_table(self):
 		pass
