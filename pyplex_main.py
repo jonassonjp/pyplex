@@ -228,7 +228,7 @@ class PyplexSolver():
 			print("\nIteration #{}".format(i))
 			self.simplex_iter[0].print_tableau()
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
-		print('Total Iterations: {}'.format(len(self.simplex_iter)-1))
+		print('Total Iterations: {}'.format(len(self.simplex_iter)))
 
 	def create_table(self):
 		pass
