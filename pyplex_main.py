@@ -230,6 +230,8 @@ class PyplexSolver():
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
 		print('Total Iterations: {}'.format(len(self.simplex_iter)-1))
 
+
+
 	def print_sensitivity_analysis(self):
 		clear_screen()
 		width_column=90
@@ -256,10 +258,10 @@ class PyplexSolver():
 		# else:
 		# 	self.exec_maximize()
 		# self.print_results()
-		# value=input("Imprime Relatório de Sensibilidade? (S/N)")[0]
+		# value=input("Imprime Relatório de Sensibilidade (S/N)?: ")[0]
 		# if value.lower() == 's':
 		# 	self.print_sensitivity_analysis()
-		#
+
 
 
 # Creates an matrix/table with zeros
