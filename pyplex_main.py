@@ -65,12 +65,16 @@ class PyplexSolver():
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
+		self.decision_var=list()
+		self.constraints=list()
 
 	def generate_first_tableau(self, dec_vars, const, result):
 		"""
 			Generate the first table with all the values
 			First row is the obj. function
 		"""
+		# self.decision_var=dec_vars
+		# self.constraints=const
 		tableau = PyplexTableau(len(dec_vars),len(const))
 		tableau.table_rows_names.append('Z')
 		for x in range(1, len(dec_vars)+1):
@@ -204,6 +208,14 @@ class PyplexSolver():
 				print("Next Iteration: ")
 				self.simplex_iter[i].print_tableau()
 
+			# Divide the new line by the pivot number
+			new_pivot_line = self.div_array(
+					new_tableau.table[pivot_r],
+					np.full((1,number_col), self.pivot_number, dtype=float)
+			)
+			# table[pivot_r] = new_pivot_line
+			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
+
 			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, self.pivot_number)
 			if self.verbose:
 				print("Table: ")
@@ -216,6 +228,19 @@ class PyplexSolver():
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
 
 
+	def print_optimal_solution(self):
+
+		final_tableau = self.simplex_iter[-1]
+		dec_vars_list = final_tableau.table_rows_names
+		# Grab all the desicion variables from the last tableau
+		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
+
+		# Order the decision variables
+		decision_in_solution = {i: decision_in_solution[i] for i in sorted(decision_in_solution)}
+		print('Z\t= {:.2f}'.format(final_tableau.table[0][-1]))
+		for key, value in decision_in_solution.items():
+			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+
 	def print_results(self):
 		clear_screen()
 		print('=' * 30)
@@ -226,9 +251,11 @@ class PyplexSolver():
 		self.simplex_iter[0].print_tableau()
 		for i in range(1, len(self.simplex_iter)):
 			print("\nIteration #{}".format(i))
-			self.simplex_iter[0].print_tableau()
+			self.simplex_iter[i].print_tableau()
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
-		print('Total Iterations: {}'.format(len(self.simplex_iter)-1))
+		print('Total Iterations: {}'.format(len(self.simplex_iter)))
+		print('\nOptimal Solution: ')
+		self.print_optimal_solution()
 
 
 
