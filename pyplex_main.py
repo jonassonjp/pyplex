@@ -247,7 +247,8 @@ class PyplexSolver():
 		print('\tR E S U L T S')
 		print('=' * 30)
 
-		print("Matriz original:")
+		print("Original matrix:")
+		print("Iteration #0")
 		self.simplex_iter[0].print_tableau()
 		for i in range(1, len(self.simplex_iter)):
 			print("\nIteration #{}".format(i))
