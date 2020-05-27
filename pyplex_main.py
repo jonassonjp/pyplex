@@ -204,6 +204,14 @@ class PyplexSolver():
 				print("Next Iteration: ")
 				self.simplex_iter[i].print_tableau()
 
+			# Divide the new line by the pivot number
+			new_pivot_line = self.div_array(
+					new_tableau.table[pivot_r],
+					np.full((1,number_col), self.pivot_number, dtype=float)
+			)
+			# table[pivot_r] = new_pivot_line
+			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
+
 			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, self.pivot_number)
 			if self.verbose:
 				print("Table: ")
@@ -226,7 +234,7 @@ class PyplexSolver():
 		self.simplex_iter[0].print_tableau()
 		for i in range(1, len(self.simplex_iter)):
 			print("\nIteration #{}".format(i))
-			self.simplex_iter[0].print_tableau()
+			self.simplex_iter[i].print_tableau()
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
 		print('Total Iterations: {}'.format(len(self.simplex_iter)))
 
