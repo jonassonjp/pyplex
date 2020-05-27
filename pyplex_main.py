@@ -230,16 +230,37 @@ class PyplexSolver():
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
 		print('Total Iterations: {}'.format(len(self.simplex_iter)-1))
 
+	def print_sensitivity_analysis(self):
+		clear_screen()
+		width_column=90
+		print('=' * width_column, '\n\t\tR E L A T Ó R I O\tS E N S I B I L I D A D E')
+		print('-' * width_column)
+		print('Var Decisao | \tValor |\tCusto Reduz | Coef.Objetivo | Acrs. Possível | Decres. Possível |')
+		# For valores aqui
+		print('-' * width_column)
+		print('-' * width_column, '\n\nRestrições')
+		print('-' * width_column)
+		print(' Restrição  | \tValor |\tPreço Somb  | Rest. Lado Dir | Acrs. Possível | Decres. Possível |')
+		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
+
+
 	def create_table(self):
 		pass
 		# return numpy table
 
 	def exec_solver(self, ):
-		if self.max_min.lower() == 'min':
-			self.exec_minimize()
-		else:
-			self.exec_maximize()
-		self.print_results()
+		self.print_sensitivity_analysis()
+
+		# if self.max_min.lower() == 'min':
+		# 	self.exec_minimize()
+		# else:
+		# 	self.exec_maximize()
+		# self.print_results()
+		# value=input("Imprime Relatório de Sensibilidade? (S/N)")[0]
+		# if value.lower() == 's':
+		# 	self.print_sensitivity_analysis()
+		#
+
 
 # Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
