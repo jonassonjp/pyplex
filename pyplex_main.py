@@ -355,13 +355,14 @@ def print_constraints(constraints):
 
 
 def print_help_parameters():
-	print('Options are')
+	print('Options are:')
 	print('pyplex.py -d <vector-decision_variables> -A <matrix-constraints> -r <vector> -t <obj_func_type>')
 	print('\th: Prints this help')
-	print('\td: Objective function coefficients')
+	print('\tc: Objective function coefficients')
 	print('\tA: Matrix of the constraints (coefficients)')
-	print('\tr: Result of the constraints equation (Ax <= r )')
-	print('\tt: Type of objective function (max or min)')
+	print('\tb: Result of the constraints equation (Ax <= r )')
+	print('\tp: Type of objective function (max or min)')
+	print('\tv: Verbose mode. Prints out every iteration')
 
 
 def create_empty_matrix(rows, cols):
@@ -373,18 +374,19 @@ if __name__ == "__main__":
 
 	welcome_message()
 	decision_vars = []
-	constraints_matrix = []
+	constraints_coef = []
 	result_equation = []
 	type_obj_function = ''
+	debug = ''
 	verbose = True
 
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hd:A:r:t:v", ["d=", "A=", "r=", "t=", "v"])
+		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
-				'pyplex.py -d <vector-decision_variables> -A <constraints-matrix> -r <vector> -t <obj_func_type> ' +
+				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -b <vector> -p <obj_func_type> ' +
 				'-v <verbose-True-False>'
 		)
 		sys.exit(2)
@@ -392,18 +394,27 @@ if __name__ == "__main__":
 		if opt == '-h':
 			print_help_parameters()
 			sys.exit()
-		elif opt in ("-d"):
+		elif opt in ("-c"):
 			decision_vars = ast.literal_eval(arg)
 		elif opt in ("-A"):
-			constraints_matrix = ast.literal_eval(arg)
-		elif opt in ("-r"):
+			constraints_coef = ast.literal_eval(arg)
+		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
-		elif opt in ("-t"):
+		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
 			verbose = arg.strip()
+		elif opt in ("-d"):
+			debug = arg.strip()
 
-	if not decision_vars or not constraints_matrix or not result_equation:
+	if debug.lower() == 'true':
+		decision_vars = []
+		constraints_coef = []
+		result_equation = []
+		print("DEBUG mode - values are fixed")
+		sys.exit()
+
+	elif not decision_vars or not constraints_coef or not result_equation:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
 		print_help_parameters()
 		sys.exit()
@@ -412,7 +423,7 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars,constraints_matrix,result_equation,type_obj_function,verbose)
+	my_solver = PyplexSolver(decision_vars,constraints_coef,result_equation,type_obj_function,verbose)
 	my_solver.exec_solver()
 
 
