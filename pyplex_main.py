@@ -81,8 +81,8 @@ class PyplexSolver():
 			tableau.table_columns_names.append('X{}'.format(x))
 
 		for x in range(1, len(const)+1):
-			tableau.table_columns_names.append('F{}'.format(x))
-			tableau.table_rows_names.append('F{}'.format(x))
+			tableau.table_columns_names.append('S{}'.format(x))
+			tableau.table_rows_names.append('S{}'.format(x))
 
 		tableau.table_columns_names.append('R')
 
@@ -170,14 +170,27 @@ class PyplexSolver():
 		return next_tableau
 
 
-	def check_negative_value_z(self, elements):
+	def optimality_check(self, elements):
 		"""
 			Checks if the Z's row elements has negative values. Is so, returns True, otherwise False
 		"""
 		return True if len(elements[elements < 0]) > 0 else False
 
+	def two_phase_method(self, tableau):
+		print('Initiating two phase method')
+		print('Phase 1')
+		print('Phase 2')
+		#change
+		#self.exec_maximize()
+
+
 	def exec_minimize(self):
 		print('Minimize Under constrtuction')
+		#Todo Minimize Check inequeations
+		# Check if there is any inequations parameters to be 'G' Greater then
+		# If there is, then proceed to two_phase_method
+		#Todo Minimize Implement Two Phase Method
+		#Todo Minimize Z row must be the last row
 
 
 	def exec_maximize(self):
@@ -187,9 +200,11 @@ class PyplexSolver():
 
 		print('Maximize')
 		i =0
-		while self.check_negative_value_z(self.simplex_iter[i].table[0]):
+
+		while self.optimality_check(self.simplex_iter[i].table[0]):
 
 			if self.verbose: print(self.simplex_iter[i].print_tableau())
+
 			# Discover the pivot column
 			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
@@ -299,9 +314,6 @@ def print_equation_options():
 	eq_options = eq_options[:-2]
 	print(eq_options)
 
-
-# if __name__ == "__main__":
-# 	print_equation_options()
 def read_decision_vars():
 	decisionVars = dict()
 
@@ -360,6 +372,7 @@ def print_help_parameters():
 	print('\th: Prints this help')
 	print('\tc: Objective function coefficients')
 	print('\tA: Matrix of the constraints (coefficients)')
+	print('\ti: Inequations (E, L, G)')
 	print('\tb: Result of the constraints equation (Ax <= r )')
 	print('\tp: Type of objective function (max or min)')
 	print('\tv: Verbose mode. Prints out every iteration')
@@ -371,7 +384,6 @@ def create_empty_matrix(rows, cols):
 
 
 if __name__ == "__main__":
-
 	welcome_message()
 	decision_vars = []
 	constraints_coef = []
@@ -379,14 +391,15 @@ if __name__ == "__main__":
 	type_obj_function = ''
 	debug = ''
 	verbose = True
+	verb_arg = ''
 
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "b=", "p=", "v=", "d="])
+		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "i=", "b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
-				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -b <vector> -p <obj_func_type> ' +
+				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
 				'-v <verbose-True-False>'
 		)
 		sys.exit(2)
@@ -398,12 +411,14 @@ if __name__ == "__main__":
 			decision_vars = ast.literal_eval(arg)
 		elif opt in ("-A"):
 			constraints_coef = ast.literal_eval(arg)
+		elif opt in ("-i"):
+			ineq_params = ast.literal_eval(arg)
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
-			verbose = arg.strip()
+			verb_arg = arg.strip()
 		elif opt in ("-d"):
 			debug = arg.strip()
 
@@ -414,7 +429,9 @@ if __name__ == "__main__":
 		print("DEBUG mode - values are fixed")
 		sys.exit()
 
-	elif not decision_vars or not constraints_coef or not result_equation:
+	verbose = True if verb_arg.lower() == 'true' else False
+
+	if not decision_vars or not constraints_coef or not result_equation:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
 		print_help_parameters()
 		sys.exit()

@@ -6,6 +6,13 @@ Verificar se a solucao é otima, isto é se existem coeficientes negativos na eq
 Prepare the overall structure and create new branch for each functionality
 - Change the user input data. Pass as parameters.
 
+
+
+
+
+
+
+
 1. Prepare objective function (times -1)
 2. Add slack variables (variáveis de folga) to constraints
 3. Create the first table (matrix) with inputed elements
