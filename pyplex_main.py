@@ -195,6 +195,8 @@ class PyplexSolver():
 
 	def exec_minimize(self):
 		print('Minimize Under constrtuction')
+
+
 		#Todo Minimize Check inequeations
 		# Check if there is any inequations parameters to be 'G' Greater then
 		# If there is, then proceed to two_phase_method
