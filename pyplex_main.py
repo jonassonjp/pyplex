@@ -59,15 +59,16 @@ class PyplexSolver():
 	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
+		self.decision_var=list()
+		self.constraints=list()
+		self.inequations=list()
+
 		first_tableau = self.generate_first_tableau(dec_vars,const,ineq, result)
 		self.simplex_iter.append(first_tableau)
 		self.pivot_number = 0
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
-		self.decision_var=list()
-		self.constraints=list()
-		self.inequations=list()
 
 
 	def generate_first_tableau(self, dec_vars, const, ineq, result):
@@ -190,11 +191,23 @@ class PyplexSolver():
 		#change
 		#self.exec_maximize()
 
-	def check_inequations(self, ineq):
-		pass
 
 	def exec_minimize(self):
-		print('Minimize Under constrtuction')
+		print("Minimize on it's way..." )
+
+		# Checks for inequalities
+		if 'L' in self.inequations:
+			print('Begin two phase method')
+			exit(0)
+
+		# We will create a new first table for solving Minimizing problems
+		new_tableau = self.simplex_iter[0].copy()
+		temp_Z_line=np.array(new_tableau.table[0], dtype=float)
+		new_tableau.table[0] = new_tableau.table[-1]
+		new_tableau.table[-1] = temp_Z_line
+
+		
+		exit(0)
 
 
 		#Todo Minimize Check inequeations
