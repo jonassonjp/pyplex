@@ -59,16 +59,24 @@ class PyplexSolver():
 	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		self.decision_var=list()
-		self.constraints=list()
-		self.inequations=list()
-
-		first_tableau = self.generate_first_tableau(dec_vars,const,ineq, result)
-		self.simplex_iter.append(first_tableau)
-		self.pivot_number = 0
+		self.decision_var=dec_vars
+		self.constraints=const
+		self.inequations=ineq
+		self.result=result
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
+
+		if max_min == 'min':
+			#Transpose var and set to decision var and constraints
+			self.decision_var = result
+			self.result = dec_vars
+
+		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequations, self.result)
+		self.simplex_iter.append(first_tableau)
+		self.pivot_number = 0
+
+
 
 
 	def generate_first_tableau(self, dec_vars, const, ineq, result):
@@ -88,7 +96,7 @@ class PyplexSolver():
 			tableau.table_columns_names.append('S{}'.format(x))
 			tableau.table_rows_names.append('S{}'.format(x))
 
-		tableau.table_columns_names.append('R')
+		tableau.table_columns_names.append('b')
 
 		# Appends 0 to the rest of the line
 		first_row = np.append(dec_vars, np.full((1, len(const) + 1), 0))
@@ -191,7 +199,6 @@ class PyplexSolver():
 		#change
 		#self.exec_maximize()
 
-
 	def exec_minimize(self):
 		print("Minimize on it's way..." )
 
@@ -200,19 +207,54 @@ class PyplexSolver():
 			print('Begin two phase method')
 			exit(0)
 
-		# We will create a new first table for solving Minimizing problems
-		new_tableau = self.simplex_iter[0].copy()
-		temp_Z_line=np.array(new_tableau.table[0], dtype=float)
-		new_tableau.table[0] = new_tableau.table[-1]
-		new_tableau.table[-1] = temp_Z_line
+		# # We will create a new first table for solving Minimizing problems
+		# new_tableau = self.simplex_iter[0].copy()
+		# # Swap the Z line with the last one
+		# temp_Z_line=np.array(new_tableau.table[0], dtype=float)
+		# new_tableau.table[0] = new_tableau.table[-1]
+		# new_tableau.table[-1] = temp_Z_line
+		#
+		#
+		# # Swap the Z line label the last one
+		# temp_row_label = new_tableau.table_rows_names[0]
+		# new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
+		# new_tableau.table_rows_names[-1] = temp_row_label
+		#
+		# # Transpose the new created matrix
+		# new_tableau.table = np.transpose(new_tableau.table)
+		#
+		# new_tableau.num_rows = np.size(new_tableau.table, 0)
+		# new_tableau.num_columns = np. size(new_tableau.table, 1)
+		#
+		# # Creates the labels for the new tableau
+		# new_tableau.table_rows_names = list()
+		# new_tableau.table_columns_names_names = list()
+		# for x in range(1, len(self.decision_var)+1):
+		# 	new_tableau.table_columns_names.append('X{}'.format(x))
+		#
+		# for x in range(1, len(self.constraints)+1):
+		# 	new_tableau.table_columns_names.append('S{}'.format(x))
+		# 	new_tableau.table_rows_names.append('S{}'.format(x))
+		# new_tableau.table_rows_names.append('Z')
+		#
+		# new_tableau.table_columns_names.append('b')
+		#
+		#
+		# self.simplex_iter[0] = new_tableau
 
-		
-		exit(0)
+		#ToDo Minimize
+		# DONE: Swap the Z line with the last one
+		# DONE: Swap the Z line label the last one
+		# Create the new labels
+		# Transpose the matrix
+		# Add the matrix to the list of iterations
+		# Maximize the matrix
+		# See results
+		# Maybe needs to invert the lines again
 
 
-		#Todo Minimize Check inequeations
-		# Check if there is any inequations parameters to be 'G' Greater then
-		# If there is, then proceed to two_phase_method
+
+
 		#Todo Minimize Implement Two Phase Method
 		#Todo Minimize Z row must be the last row
 
@@ -243,9 +285,6 @@ class PyplexSolver():
 
 			# Create the new tableau
 			new_tableau = self.simplex_iter[i].copy()
-			if self.verbose:
-				print("Next Iteration: ")
-				self.simplex_iter[i].print_tableau()
 
 			# Divide the new line by the pivot number
 			new_pivot_line = self.div_array(
@@ -315,10 +354,11 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, ):
-		if self.max_min.lower() == 'min':
-			self.exec_minimize()
-		else:
-			self.exec_maximize()
+		# if self.max_min.lower() == 'min':
+		# 	self.exec_minimize()
+		# else:
+		# 	self.exec_maximize()
+		self.exec_maximize()
 		self.print_results()
 
 # Creates an matrix/table with zeros
