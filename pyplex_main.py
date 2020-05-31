@@ -59,15 +59,26 @@ class PyplexSolver():
 	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		first_tableau = self.generate_first_tableau(dec_vars,const,ineq, result)
-		self.simplex_iter.append(first_tableau)
-		self.pivot_number = 0
+		self.decision_var=dec_vars
+		self.constraints=const
+		self.inequations=ineq
+		self.result=result
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
-		self.decision_var=list()
-		self.constraints=list()
-		self.inequations=list()
+
+		if max_min == 'min':
+			#Transpose var and set to decision var and constraints
+			self.decision_var = result
+			self.result = dec_vars
+			self.constraints = np.transpose(np.array(self.constraints))
+			self.constraints = self.constraints.tolist()
+
+		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequations, self.result)
+		self.simplex_iter.append(first_tableau)
+		self.pivot_number = 0
+
+
 
 
 	def generate_first_tableau(self, dec_vars, const, ineq, result):
@@ -87,7 +98,7 @@ class PyplexSolver():
 			tableau.table_columns_names.append('S{}'.format(x))
 			tableau.table_rows_names.append('S{}'.format(x))
 
-		tableau.table_columns_names.append('R')
+		tableau.table_columns_names.append('b')
 
 		# Appends 0 to the rest of the line
 		first_row = np.append(dec_vars, np.full((1, len(const) + 1), 0))
@@ -173,14 +184,81 @@ class PyplexSolver():
 		return next_tableau
 
 
-	def check_negative_value_z(self, elements):
+	def optimality_check(self, elements):
 		"""
 			Checks if the Z's row elements has negative values. Is so, returns True, otherwise False
 		"""
 		return True if len(elements[elements < 0]) > 0 else False
 
+
+	def two_phase_method(self, dec_vars, constraints, right_hand_side):
+		print('Initiating two phase method')
+		print('Phase 1')
+		# Set initial tableau
+
+
+		print('Phase 2')
+		#change
+		#self.exec_maximize()
+
 	def exec_minimize(self):
-		print('Minimize Under constrtuction')
+		print("Minimize on it's way..." )
+
+		# Checks for inequalities
+		if 'L' in self.inequations:
+			print('Begin two phase method')
+			exit(0)
+
+		# # We will create a new first table for solving Minimizing problems
+		# new_tableau = self.simplex_iter[0].copy()
+		# # Swap the Z line with the last one
+		# temp_Z_line=np.array(new_tableau.table[0], dtype=float)
+		# new_tableau.table[0] = new_tableau.table[-1]
+		# new_tableau.table[-1] = temp_Z_line
+		#
+		#
+		# # Swap the Z line label the last one
+		# temp_row_label = new_tableau.table_rows_names[0]
+		# new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
+		# new_tableau.table_rows_names[-1] = temp_row_label
+		#
+		# # Transpose the new created matrix
+		# new_tableau.table = np.transpose(new_tableau.table)
+		#
+		# new_tableau.num_rows = np.size(new_tableau.table, 0)
+		# new_tableau.num_columns = np. size(new_tableau.table, 1)
+		#
+		# # Creates the labels for the new tableau
+		# new_tableau.table_rows_names = list()
+		# new_tableau.table_columns_names_names = list()
+		# for x in range(1, len(self.decision_var)+1):
+		# 	new_tableau.table_columns_names.append('X{}'.format(x))
+		#
+		# for x in range(1, len(self.constraints)+1):
+		# 	new_tableau.table_columns_names.append('S{}'.format(x))
+		# 	new_tableau.table_rows_names.append('S{}'.format(x))
+		# new_tableau.table_rows_names.append('Z')
+		#
+		# new_tableau.table_columns_names.append('b')
+		#
+		#
+		# self.simplex_iter[0] = new_tableau
+
+		#ToDo Minimize
+		# DONE: Swap the Z line with the last one
+		# DONE: Swap the Z line label the last one
+		# Create the new labels
+		# Transpose the matrix
+		# Add the matrix to the list of iterations
+		# Maximize the matrix
+		# See results
+		# Maybe needs to invert the lines again
+
+
+
+
+		#Todo Minimize Implement Two Phase Method
+		#Todo Minimize Z row must be the last row
 
 
 	def exec_maximize(self):
@@ -190,9 +268,11 @@ class PyplexSolver():
 
 		print('Maximize')
 		i =0
-		while self.check_negative_value_z(self.simplex_iter[i].table[0]):
+
+		while self.optimality_check(self.simplex_iter[i].table[0]):
 
 			if self.verbose: print(self.simplex_iter[i].print_tableau())
+
 			# Discover the pivot column
 			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
@@ -207,9 +287,6 @@ class PyplexSolver():
 
 			# Create the new tableau
 			new_tableau = self.simplex_iter[i].copy()
-			if self.verbose:
-				print("Next Iteration: ")
-				self.simplex_iter[i].print_tableau()
 
 			# Divide the new line by the pivot number
 			new_pivot_line = self.div_array(
@@ -270,6 +347,10 @@ class PyplexSolver():
 			self.simplex_iter[i].print_tableau()
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
 		print('Total Iterations: {}'.format(len(self.simplex_iter)))
+		if self.max_min == 'max':
+			print('Maximization problem')
+		elif self.max_min == 'min':
+			print('Minimization problem')
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
 
@@ -279,10 +360,11 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, ):
-		if self.max_min.lower() == 'min':
-			self.exec_minimize()
-		else:
-			self.exec_maximize()
+		# if self.max_min.lower() == 'min':
+		# 	self.exec_minimize()
+		# else:
+		# 	self.exec_maximize()
+		self.exec_maximize()
 		self.print_results()
 
 # Creates an matrix/table with zeros
@@ -315,9 +397,6 @@ def print_equation_options():
 	eq_options = eq_options[:-2]
 	print(eq_options)
 
-
-# if __name__ == "__main__":
-# 	print_equation_options()
 def read_decision_vars():
 	decisionVars = dict()
 
@@ -376,7 +455,7 @@ def print_help_parameters():
 	print('\th: Prints this help')
 	print('\tc: Objective function coefficients')
 	print('\tA: Matrix of the constraints (coefficients)')
-	print('\ti: inequations')
+	print('\ti: Inequations (E, L, G)')
 	print('\tb: Result of the constraints equation (Ax <= r )')
 	print('\tp: Type of objective function (max or min)')
 	print('\tv: Verbose mode. Prints out every iteration')
@@ -388,15 +467,15 @@ def create_empty_matrix(rows, cols):
 
 
 if __name__ == "__main__":
-
 	welcome_message()
 	decision_vars = []
 	constraints_coef = []
 	result_equation = []
-	inequations = []
+	inequalities = []
 	type_obj_function = ''
 	debug = ''
 	verbose = True
+	verb_arg = ''
 
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
@@ -419,22 +498,24 @@ if __name__ == "__main__":
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
 		elif opt in ("-i"):
-			inequations = arg.strip()
+			inequalities = arg.strip()
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
-			verbose = arg.strip()
+			verb_arg = arg.strip()
 		elif opt in ("-d"):
 			debug = arg.strip()
 
-	if debug.lower() == 'true':
-		decision_vars = []
-		constraints_coef = []
-		result_equation = []
-		print("DEBUG mode - values are fixed")
-		sys.exit()
+	# if debug.lower() == 'true':
+	# 	decision_vars = []
+	# 	constraints_coef = []
+	# 	result_equation = []
+	# 	print("DEBUG mode - values are fixed")
+	# 	sys.exit()
 
-	elif not decision_vars or not constraints_coef or not result_equation or not inequations:
+	verbose = True if verb_arg.lower() == 'true' else False
+
+	if not decision_vars or not constraints_coef or not result_equation or not inequalities:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
 		print_help_parameters()
 		sys.exit()
@@ -443,7 +524,7 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars,constraints_coef,inequations, result_equation,type_obj_function,verbose)
+	my_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
 	my_solver.exec_solver()
 
 
