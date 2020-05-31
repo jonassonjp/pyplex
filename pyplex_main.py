@@ -56,10 +56,10 @@ class PyplexTableau():
 
 class PyplexSolver():
 
-	def __init__(self,  dec_vars, const, result, max_min='max', verb=False):
+	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		first_tableau = self.generate_first_tableau(dec_vars,const,result)
+		first_tableau = self.generate_first_tableau(dec_vars,const,ineq, result)
 		self.simplex_iter.append(first_tableau)
 		self.pivot_number = 0
 		self.max_min = max_min
@@ -67,14 +67,17 @@ class PyplexSolver():
 		self.verbose = verb
 		self.decision_var=list()
 		self.constraints=list()
+		self.inequations=list()
 
-	def generate_first_tableau(self, dec_vars, const, result):
+
+	def generate_first_tableau(self, dec_vars, const, ineq, result):
 		"""
 			Generate the first table with all the values
 			First row is the obj. function
 		"""
-		# self.decision_var=dec_vars
-		# self.constraints=const
+		self.decision_var=dec_vars
+		self.constraints=const
+		self.inequations=ineq
 		tableau = PyplexTableau(len(dec_vars),len(const))
 		tableau.table_rows_names.append('Z')
 		for x in range(1, len(dec_vars)+1):
@@ -250,17 +253,29 @@ class PyplexSolver():
 
 
 	def print_optimal_solution(self):
-
+		# Gets the last table in the iteration list
 		final_tableau = self.simplex_iter[-1]
+
 		dec_vars_list = final_tableau.table_rows_names
 		# Grab all the desicion variables from the last tableau
 		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
 
+		# Slack, Suplus Variables if any
+		other_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
+
 		# Order the decision variables
 		decision_in_solution = {i: decision_in_solution[i] for i in sorted(decision_in_solution)}
+		# Slack, Suplus Variables if any
+		other_variables = {i: other_variables[i] for i in sorted(other_variables)}
+
 		print('Z\t= {:.2f}'.format(final_tableau.table[0][-1]))
+
 		for key, value in decision_in_solution.items():
 			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+		# Prints the other varibles in the solution
+		for key, value in other_variables.items():
+			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+
 
 	def print_results(self):
 		clear_screen()
@@ -278,6 +293,7 @@ class PyplexSolver():
 		print('Total Iterations: {}'.format(len(self.simplex_iter)))
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
+
 
 	def create_table(self):
 		pass
@@ -394,6 +410,7 @@ if __name__ == "__main__":
 	decision_vars = []
 	constraints_coef = []
 	result_equation = []
+	inequations = []
 	type_obj_function = ''
 	debug = ''
 	verbose = True
@@ -402,7 +419,7 @@ if __name__ == "__main__":
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "i=", "b=", "p=", "v=", "d="])
+		options, args = getopt.getopt(argv, "hc:A:i:b:p:v:d", ["c=", "A=", "i=", "b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
 				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
@@ -421,6 +438,8 @@ if __name__ == "__main__":
 			ineq_params = ast.literal_eval(arg)
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
+		elif opt in ("-i"):
+			inequations = arg.strip()
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
@@ -438,6 +457,7 @@ if __name__ == "__main__":
 	verbose = True if verb_arg.lower() == 'true' else False
 
 	if not decision_vars or not constraints_coef or not result_equation:
+	elif not decision_vars or not constraints_coef or not result_equation or not inequations:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
 		print_help_parameters()
 		sys.exit()
@@ -446,7 +466,7 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars,constraints_coef,result_equation,type_obj_function,verbose)
+	my_solver = PyplexSolver(decision_vars,constraints_coef,inequations, result_equation,type_obj_function,verbose)
 	my_solver.exec_solver()
 
 
