@@ -176,13 +176,19 @@ class PyplexSolver():
 		"""
 		return True if len(elements[elements < 0]) > 0 else False
 
-	def two_phase_method(self, tableau):
+
+	def two_phase_method(self, dec_vars, constraints, right_hand_side):
 		print('Initiating two phase method')
 		print('Phase 1')
+		# Set initial tableau
+
+
 		print('Phase 2')
 		#change
 		#self.exec_maximize()
 
+	def check_inequations(self, ineq):
+		pass
 
 	def exec_minimize(self):
 		print('Minimize Under constrtuction')
