@@ -410,7 +410,7 @@ if __name__ == "__main__":
 	decision_vars = []
 	constraints_coef = []
 	result_equation = []
-	inequations = []
+	inequalities = []
 	type_obj_function = ''
 	debug = ''
 	verbose = True
@@ -434,12 +434,10 @@ if __name__ == "__main__":
 			decision_vars = ast.literal_eval(arg)
 		elif opt in ("-A"):
 			constraints_coef = ast.literal_eval(arg)
-		elif opt in ("-i"):
-			ineq_params = ast.literal_eval(arg)
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
 		elif opt in ("-i"):
-			inequations = arg.strip()
+			inequalities = arg.strip()
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
@@ -447,17 +445,16 @@ if __name__ == "__main__":
 		elif opt in ("-d"):
 			debug = arg.strip()
 
-	if debug.lower() == 'true':
-		decision_vars = []
-		constraints_coef = []
-		result_equation = []
-		print("DEBUG mode - values are fixed")
-		sys.exit()
+	# if debug.lower() == 'true':
+	# 	decision_vars = []
+	# 	constraints_coef = []
+	# 	result_equation = []
+	# 	print("DEBUG mode - values are fixed")
+	# 	sys.exit()
 
 	verbose = True if verb_arg.lower() == 'true' else False
 
-	if not decision_vars or not constraints_coef or not result_equation:
-	elif not decision_vars or not constraints_coef or not result_equation or not inequations:
+	if not decision_vars or not constraints_coef or not result_equation or not inequalities:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
 		print_help_parameters()
 		sys.exit()
@@ -466,7 +463,7 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars,constraints_coef,inequations, result_equation,type_obj_function,verbose)
+	my_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
 	my_solver.exec_solver()
 
 
