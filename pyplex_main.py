@@ -67,7 +67,7 @@ class PyplexSolver():
 		self.verbose = verb
 		self.decision_var=list()
 		self.constraints=list()
-		self.inequations=ineq
+		self.inequations=list()
 
 
 	def generate_first_tableau(self, dec_vars, const, ineq, result):
@@ -75,16 +75,17 @@ class PyplexSolver():
 			Generate the first table with all the values
 			First row is the obj. function
 		"""
-		# self.decision_var=dec_vars
-		# self.constraints=const
+		self.decision_var=dec_vars
+		self.constraints=const
+		self.inequations=ineq
 		tableau = PyplexTableau(len(dec_vars),len(const))
 		tableau.table_rows_names.append('Z')
 		for x in range(1, len(dec_vars)+1):
 			tableau.table_columns_names.append('X{}'.format(x))
 
 		for x in range(1, len(const)+1):
-			tableau.table_columns_names.append('F{}'.format(x))
-			tableau.table_rows_names.append('F{}'.format(x))
+			tableau.table_columns_names.append('S{}'.format(x))
+			tableau.table_rows_names.append('S{}'.format(x))
 
 		tableau.table_columns_names.append('R')
 
@@ -231,17 +232,29 @@ class PyplexSolver():
 
 
 	def print_optimal_solution(self):
-
+		# Gets the last table in the iteration list
 		final_tableau = self.simplex_iter[-1]
+
 		dec_vars_list = final_tableau.table_rows_names
 		# Grab all the desicion variables from the last tableau
 		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
 
+		# Slack, Suplus Variables if any
+		other_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
+
 		# Order the decision variables
 		decision_in_solution = {i: decision_in_solution[i] for i in sorted(decision_in_solution)}
+		# Slack, Suplus Variables if any
+		other_variables = {i: other_variables[i] for i in sorted(other_variables)}
+
 		print('Z\t= {:.2f}'.format(final_tableau.table[0][-1]))
+
 		for key, value in decision_in_solution.items():
 			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+		# Prints the other varibles in the solution
+		for key, value in other_variables.items():
+			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+
 
 	def print_results(self):
 		clear_screen()
@@ -259,6 +272,7 @@ class PyplexSolver():
 		print('Total Iterations: {}'.format(len(self.simplex_iter)))
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
+
 
 	def create_table(self):
 		pass
@@ -387,7 +401,7 @@ if __name__ == "__main__":
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hc:A:i:b:p:v:d", ["c=", "A=", "i=" ,"b=", "p=", "v=", "d="])
+		options, args = getopt.getopt(argv, "hc:A:i:b:p:v:d", ["c=", "A=", "i=", "b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
 				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
@@ -405,7 +419,7 @@ if __name__ == "__main__":
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
 		elif opt in ("-i"):
-			inequations = ast.literal_eval(arg)
+			inequations = arg.strip()
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
