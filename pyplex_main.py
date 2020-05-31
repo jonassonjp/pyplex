@@ -56,10 +56,10 @@ class PyplexTableau():
 
 class PyplexSolver():
 
-	def __init__(self,  dec_vars, const, result, max_min='max', verb=False):
+	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		first_tableau = self.generate_first_tableau(dec_vars,const,result)
+		first_tableau = self.generate_first_tableau(dec_vars,const,ineq, result)
 		self.simplex_iter.append(first_tableau)
 		self.pivot_number = 0
 		self.max_min = max_min
@@ -67,8 +67,10 @@ class PyplexSolver():
 		self.verbose = verb
 		self.decision_var=list()
 		self.constraints=list()
+		self.inequations=ineq
 
-	def generate_first_tableau(self, dec_vars, const, result):
+
+	def generate_first_tableau(self, dec_vars, const, ineq, result):
 		"""
 			Generate the first table with all the values
 			First row is the obj. function
@@ -360,6 +362,7 @@ def print_help_parameters():
 	print('\th: Prints this help')
 	print('\tc: Objective function coefficients')
 	print('\tA: Matrix of the constraints (coefficients)')
+	print('\ti: inequations')
 	print('\tb: Result of the constraints equation (Ax <= r )')
 	print('\tp: Type of objective function (max or min)')
 	print('\tv: Verbose mode. Prints out every iteration')
@@ -376,7 +379,7 @@ if __name__ == "__main__":
 	decision_vars = []
 	constraints_coef = []
 	result_equation = []
-	ienequations = []
+	inequations = []
 	type_obj_function = ''
 	debug = ''
 	verbose = True
@@ -384,7 +387,7 @@ if __name__ == "__main__":
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "i=" ,"b=", "p=", "v=", "d="])
+		options, args = getopt.getopt(argv, "hc:A:i:b:p:v:d", ["c=", "A=", "i=" ,"b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
 				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
@@ -402,7 +405,7 @@ if __name__ == "__main__":
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
 		elif opt in ("-i"):
-			ienequations = ast.literal_eval(arg)
+			inequations = ast.literal_eval(arg)
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
@@ -417,7 +420,7 @@ if __name__ == "__main__":
 		print("DEBUG mode - values are fixed")
 		sys.exit()
 
-	elif not decision_vars or not constraints_coef or not result_equation:
+	elif not decision_vars or not constraints_coef or not result_equation or not inequations:
 		print('Insufficient or invalid parameters. Please provide correct arguments.')
 		print_help_parameters()
 		sys.exit()
@@ -426,7 +429,7 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars,constraints_coef,result_equation,type_obj_function,verbose)
+	my_solver = PyplexSolver(decision_vars,constraints_coef,inequations, result_equation,type_obj_function,verbose)
 	my_solver.exec_solver()
 
 
