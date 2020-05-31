@@ -376,6 +376,7 @@ if __name__ == "__main__":
 	decision_vars = []
 	constraints_coef = []
 	result_equation = []
+	ienequations = []
 	type_obj_function = ''
 	debug = ''
 	verbose = True
@@ -383,10 +384,10 @@ if __name__ == "__main__":
 	# First argument is the application's name (pyplex.py)
 	argv = sys.argv[1:]
 	try:
-		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "b=", "p=", "v=", "d="])
+		options, args = getopt.getopt(argv, "hc:A:b:p:v:d", ["c=", "A=", "i=" ,"b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
-				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -b <vector> -p <obj_func_type> ' +
+				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
 				'-v <verbose-True-False>'
 		)
 		sys.exit(2)
@@ -400,6 +401,8 @@ if __name__ == "__main__":
 			constraints_coef = ast.literal_eval(arg)
 		elif opt in ("-b"):
 			result_equation = ast.literal_eval(arg)
+		elif opt in ("-i"):
+			ienequations = ast.literal_eval(arg)
 		elif opt in ("-p"):
 			type_obj_function = arg.strip()
 		elif opt in ("-v"):
