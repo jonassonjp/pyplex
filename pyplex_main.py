@@ -71,6 +71,8 @@ class PyplexSolver():
 			#Transpose var and set to decision var and constraints
 			self.decision_var = result
 			self.result = dec_vars
+			self.constraints = np.transpose(np.array(self.constraints))
+			self.constraints = self.constraints.tolist()
 
 		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequations, self.result)
 		self.simplex_iter.append(first_tableau)
@@ -345,6 +347,10 @@ class PyplexSolver():
 			self.simplex_iter[i].print_tableau()
 		# First entry of simplex_iter is the initial tableau, so it does'nt count.
 		print('Total Iterations: {}'.format(len(self.simplex_iter)))
+		if self.max_min == 'max':
+			print('Maximization problem')
+		elif self.max_min == 'min':
+			print('Minimization problem')
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
 
