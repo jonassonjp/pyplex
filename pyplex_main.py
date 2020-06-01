@@ -61,7 +61,7 @@ class PyplexSolver():
 		self.simplex_iter = list()
 		self.decision_var=dec_vars
 		self.constraints=const
-		self.inequations=ineq
+		self.inequalities=ineq
 		self.result=result
 		self.max_min = max_min
 		# if true will print every iteration
@@ -74,7 +74,7 @@ class PyplexSolver():
 			self.constraints = np.transpose(np.array(self.constraints))
 			self.constraints = self.constraints.tolist()
 
-		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequations, self.result)
+		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequalities, self.result)
 		self.simplex_iter.append(first_tableau)
 		self.pivot_number = 0
 
@@ -88,7 +88,7 @@ class PyplexSolver():
 		"""
 		self.decision_var=dec_vars
 		self.constraints=const
-		self.inequations=ineq
+		self.inequalities=ineq
 		tableau = PyplexTableau(len(dec_vars),len(const))
 		tableau.table_rows_names.append('Z')
 		for x in range(1, len(dec_vars)+1):
@@ -102,12 +102,25 @@ class PyplexSolver():
 
 		# Appends 0 to the rest of the line
 		first_row = np.append(dec_vars, np.full((1, len(const) + 1), 0))
-		# Row Z * -1
+		# First row  Z * -1
 		first_row *= -1
-		# Creates a matrix with the constraints coef.
+
+		# Creates a identity matrix (constraints coef.)
 		const_var = np.array(const)
-		# Generates the slacks matrix
+
+		# Generates the slacks/surplus matrix
 		slacks_var = np.eye(len(const))
+
+		# Check for inequalities - adding surplus variables insted of slack
+		# indexes = self.check_inequalities(self.inequalities, 'G')
+		# if self.max_min == 'max' and (len(indexes)>0):
+		# 	# *-1
+		#
+		# indexes = self.check_inequalities(self.inequalities, 'L')
+		# if self.max_min == 'min' and (len(indexes)>0):
+		# 	# *-1
+
+
 		# Join both the constraints and slacks variables
 		tableau.table = np.column_stack((const_var, slacks_var))
 		# Attach the result at the far end column
@@ -122,6 +135,9 @@ class PyplexSolver():
 			divided_array[divided_array == -0] = 0   # remove -0
 		return divided_array
 
+	def check_inequalities(self, ineq, value):
+		indexes = [i for i, x in enumerate(ineq) if x == value]
+		return indexes
 
 	def next_pivot_column(self, table):
 		"""
@@ -183,6 +199,9 @@ class PyplexSolver():
 		next_tableau.table_rows_names[pivot_row_coef] = tableau.table_columns_names[pivot_col_coef]
 		return next_tableau
 
+	# Convert the inequalities to stand form
+	def convert_to_standard(self, inequalities):
+		pass
 
 	def optimality_check(self, elements):
 		"""
@@ -205,7 +224,7 @@ class PyplexSolver():
 		print("Minimize on it's way..." )
 
 		# Checks for inequalities
-		if 'L' in self.inequations:
+		if 'L' in self.inequalities:
 			print('Begin two phase method')
 			exit(0)
 
