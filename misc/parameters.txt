@@ -1,6 +1,10 @@
 # Dados apostila
 -c "[3,5]" -A "[[1,0], [0,2],[3,2]]" -i "L, L, L" -b "[4,12,18]"  -p max
 
+
+# Matusalem
+-c "[1,2,3]" -A "[[1,1,1], [2,1,4], [1,3,-1]]" -i "L, L, L" -b "[10,12,9]"  -p max
+
 # Outro exemplo
 
 #Wenshenpsu

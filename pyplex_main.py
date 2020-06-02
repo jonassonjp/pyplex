@@ -164,16 +164,16 @@ class PyplexSolver():
 		pivot_column = np.array(table[0:, pivot_col_coef], dtype=float)
 
 		# Grab the result column (the last column in our table)
-		column_r = np.array(table[0:, -1:], dtype=float)
-		column_r_trans = column_r.transpose()
+		column_b = np.array(table[0:, -1:], dtype=float)
+		column_b_trans = column_b.transpose()
 
-		pivot_line = self.div_array(column_r_trans, pivot_column)
+		pivot_line = self.div_array(column_b_trans, pivot_column)
 
 		# Search this line minus the first element, Z value
 		pivot_line_minus_Z = np.delete(pivot_line, 0)
 
-		# Value is the minimum value excluding the first value which is Z line
-		value = np.min(pivot_line_minus_Z[np.nonzero(pivot_line_minus_Z)])
+		# Value is the minimum POSITIVE value excluding the first value which is Z line
+		value = np.min(pivot_line_minus_Z[pivot_line_minus_Z > 0])
 
 		next_pvt = np.where(pivot_line[0] == value)
 
