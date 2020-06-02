@@ -150,8 +150,12 @@ class PyplexSolver():
 		# Search this line minus the first element, Z value
 		pivot_line_minus_Z = np.delete(pivot_line, 0)
 
-		# Value is the minimum POSITIVE value excluding the first value which is Z line
-		value = np.min(pivot_line_minus_Z[pivot_line_minus_Z > 0])
+		try:
+			# Value is the minimum POSITIVE value excluding the first value which is Z line
+			value = np.min(pivot_line_minus_Z[pivot_line_minus_Z > 0])
+		except ValueError:
+			print('\nThere is no solution. \nSomething is wrong. Maybe you need to reformulate your problema')
+			sys.exit(2)
 
 		next_pvt = np.where(pivot_line[0] == value)
 
