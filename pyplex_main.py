@@ -94,9 +94,14 @@ class PyplexSolver():
 		for x in range(1, len(dec_vars)+1):
 			tableau.table_columns_names.append('X{}'.format(x))
 
+		if self.max_min == 'max':
+			column_label = 'S{}'
+		elif self.max_min == 'min':
+			column_label = 'Y{}'
+
 		for x in range(1, len(const)+1):
-			tableau.table_columns_names.append('S{}'.format(x))
-			tableau.table_rows_names.append('S{}'.format(x))
+			tableau.table_columns_names.append(column_label.format(x))
+			tableau.table_rows_names.append(column_label.format(x))
 
 		tableau.table_columns_names.append('b')
 
@@ -331,29 +336,49 @@ class PyplexSolver():
 		# Gets the last table in the iteration list
 		final_tableau = self.simplex_iter[-1]
 
-		dec_vars_list = final_tableau.table_rows_names
+		if self.max_min == 'max':
+			dec_var = 'X'
+			dec_vars_list = final_tableau.table_rows_names
+		elif self.max_min == 'min':
+			dec_var = 'Y'
+			dec_vars_list = final_tableau.table_columns_names
+
 		# Grab all the desicion variables from the last tableau
-		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
+		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if dec_var in s}
 
 		# Slack, Suplus Variables if any
 		other_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
 
 		# Order the decision variables
 		decision_in_solution = {i: decision_in_solution[i] for i in sorted(decision_in_solution)}
-		# Slack, Suplus Variables if any
+
+		# order the Slack, Suplus Variables
 		other_variables = {i: other_variables[i] for i in sorted(other_variables)}
 
 		print('Z\t= {:.2f}'.format(final_tableau.table[0][-1]))
 
-		for key, value in decision_in_solution.items():
-			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
-		# Prints the other varibles in the solution
-		for key, value in other_variables.items():
-			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+		if self.max_min == 'max':
+			for key, value in decision_in_solution.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+			# Prints the other varibles in the solution
+			for key, value in other_variables.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+		elif self.max_min == 'min':
+			for key, value in decision_in_solution.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[0][value]))
+			# Prints the other varibles in the solution
+			for key, value in other_variables.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[0][value]))
+
+
 
 
 	def print_results(self):
 		clear_screen()
+
+		# ToDo Remover depois q finalizar os testes
+		# self.print_sensitivity_analysis()
+
 		print('=' * 30)
 		print('\tR E S U L T S')
 		print('=' * 30)
@@ -373,6 +398,29 @@ class PyplexSolver():
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
 
+		# ToDo Vê uma forma se vai perguntar se deseja imprimir os resultados agora
+		# self.print_sensitivity_analysis(self.simplex_iter[-1])
+
+	def print_sensitivity_analysis(self):
+
+		# rhs_range = dict()
+		# tableau = self.simplex_iter[-1]
+		# for i in range(len(self.decision_var)):
+		# 	rhs_range[tableau.table_columns_names[i]] = [1,2]
+		# print(rhs_range)
+		# exit(0)
+
+		clear_screen()
+		width_column = 90
+		print('=' * width_column, '\n\t\tR E L A T Ó R I O\tS E N S I B I L I D A D E')
+		print('-' * width_column)
+		print('Var Decisao | \tValor |\tCusto Reduz | Coef.Objetivo | Acrs. Possível | Decres. Possível |')
+		# For valores aqui
+		print('-' * width_column)
+		print('-' * width_column, '\n\nRestrições')
+		print('-' * width_column)
+		print(' Restrição  | \tValor |\tPreço Somb  | Rest. Lado Dir | Acrs. Possível | Decres. Possível |')
+		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
 
 	def create_table(self):
 		pass
@@ -385,6 +433,10 @@ class PyplexSolver():
 		# 	self.exec_maximize()
 		self.exec_maximize()
 		self.print_results()
+
+
+
+
 
 # Creates an matrix/table with zeros
 def create_matrix(num_col, num_rows):
