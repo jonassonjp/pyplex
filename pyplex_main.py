@@ -66,6 +66,7 @@ class PyplexSolver():
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
+		self.shadow_price = list()
 
 		if max_min == 'min':
 			#Transpose var and set to decision var and constraints
@@ -330,7 +331,7 @@ class PyplexSolver():
 			# Discover the pivot column
 			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
-
+		self.set_shadow_price(self.simplex_iter[-1])
 
 	def print_optimal_solution(self):
 		# Gets the last table in the iteration list
@@ -398,8 +399,31 @@ class PyplexSolver():
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
 
+		# shadow_price = self.extract_shadow_price()
+		# print('\nShadow price: \t'.join(shadow_price))
+
 		# ToDo Vê uma forma se vai perguntar se deseja imprimir os resultados agora
-		# self.print_sensitivity_analysis(self.simplex_iter[-1])
+		self.print_sensitivity_analysis()
+
+
+	def set_shadow_price(self, last_tableau):
+		shadow_var = 'S' if self.max_min == 'max' else 'Y'
+		shadow_var_list = last_tableau.table_columns_names
+
+		# Grab all the desicion variables from the last tableau
+		shadow_var_ind = {shadow_var_list[i]: i for i, s in enumerate(shadow_var_list) if shadow_var in s}
+
+		# Order the dictionary
+		shadow_var_ind = {i: shadow_var_ind[i] for i in sorted(shadow_var_ind)}
+
+		# Sets the value according to the last tableau
+		shadow_var_value = dict()
+		for key, value in shadow_var_ind.items():
+			shadow_var_value[key] = last_tableau.table[0][value]
+		self.shadow_price = shadow_var_value
+
+
+
 
 	def print_sensitivity_analysis(self):
 
@@ -414,12 +438,23 @@ class PyplexSolver():
 		width_column = 90
 		print('=' * width_column, '\n\t\tR E L A T Ó R I O\tS E N S I B I L I D A D E')
 		print('-' * width_column)
-		print('Var Decisao | \tValor |\tCusto Reduz | Coef.Objetivo | Acrs. Possível | Decres. Possível |')
+		print('Var Decisao | \tFinal Value |\tCusto Reduz | Coef.Objetivo | Acrs. Possível | Decres. Possível |')
 		# For valores aqui
 		print('-' * width_column)
 		print('-' * width_column, '\n\nRestrições')
 		print('-' * width_column)
-		print(' Restrição  | \tValor |\tPreço Somb  | Rest. Lado Dir | Acrs. Possível | Decres. Possível |')
+		print(' Constraint  | \tFinal Value |\tShadow Price  | Rest. Lado Dir | Acrs. Possível | Decres. Possível |')
+		for i in range(len(self.constraints)):
+			print('\tC{}\t'.format(i+1), end='')
+			# ToDo falta extrair slack
+			print('{:.2f}-slack\t'.format(self.result[i]), end=' ')
+			# print('{:.2f}'.format(self.shadow_price[i]), end=' ')
+			print('{:.2f}'.format(self.result[i]), end='')
+			# ToDo falta calcular
+			print('{:.2f}'.format(00000), end='')
+			# ToDo falta calcular
+			print('{:.2f}'.format(00000))
+
 		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
 
 	def create_table(self):
