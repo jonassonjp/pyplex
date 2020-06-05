@@ -59,16 +59,16 @@ class PyplexSolver():
 	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		self.decision_var=dec_vars
-		self.constraints=const
-		self.inequalities=ineq
-		self.result=result
+		self.decision_var = dec_vars
+		self.constraints = const
+		self.inequalities = ineq
+		self.result = result
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
 		self.shadow_price = list()
 
-		self.simplex_iter
+		self.sensi_analysis_iter = list()
 
 		if max_min == 'min':
 			#Transpose var and set to decision var and constraints
@@ -113,7 +113,7 @@ class PyplexSolver():
 		# First row  Z * -1
 		first_row *= -1
 
-		# Creates a identity matrix (constraints coef.)
+		# Creates a matrix with constraints coef.
 		const_var = np.array(const)
 
 		# Generates the slacks/surplus matrix
@@ -382,10 +382,6 @@ class PyplexSolver():
 
 	def print_results(self):
 		clear_screen()
-
-		# ToDo Remover depois q finalizar os testes
-		# self.print_sensitivity_analysis()
-
 		print('=' * 30)
 		print('\tR E S U L T S')
 		print('=' * 30)
@@ -464,6 +460,61 @@ class PyplexSolver():
 		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
 
 
+
+	def sensibility_analysis(self, final_tableau, decision_vars, constraints_coef, result):
+
+
+
+		# Slack var values (final tableau) y*
+		y_as_ind = {i for i, s in enumerate(final_tableau.table_columns_names) if 'S' in s}
+		y_as = np.array([final_tableau.table[0][i] for i in y_as_ind])
+
+		# Z* Z_as = y_as * b_mod
+		b_mod = np.transpose(result)
+		Z_as = np.dot(y_as,b_mod)
+
+
+
+		rows_const_array = len(constraints_coef)
+		cols_const_array = len(constraints_coef[0])
+		A_mod = np.array(constraints_coef)
+		c_mod = final_tableau.table[0,0:cols_const_array]
+
+		# Calc objective function coef. (y_as * A_mod - c_mod)
+		c_calc = np.dot(y_as, A_mod) - decision_vars
+
+		S_as = final_tableau.table[1:, min(y_as_ind):-1]
+
+		# Matrix from constraint vars
+		A_as = np.dot(S_as, A_mod)
+
+		# Result
+		b_as = np.dot(S_as, b_mod)
+		b_as = np.transpose(b_as)
+
+		# Build the matrix
+		tableau_mod = final_tableau.copy()
+		tableau_mod.table[0][-1] = Z_as
+
+
+		print ('A :{}'.format(A_mod))
+		print ('y* :{}'.format(c_mod))
+
+
+
+		pass
+		# sdadasd
+		# Read New Values
+		# Calc new Values
+		# Build New Tableau
+		# Calc simplex new tableau
+		# Viability test
+		# Optimaity test
+		# Re-optimization
+		# self.sensi_analysis_iter = list()
+
+
+
 	def read_new_data(self):
 		print("Ler dados")
 
@@ -473,18 +524,31 @@ class PyplexSolver():
 		# 	self.exec_minimize()
 		# else:
 		# 	self.exec_maximize()
-		# self.exec_maximize()
+		self.exec_maximize()
 		# self.print_results()
 
-		resp = None
-		while resp not in ('s', 'n'):
-			resp = input('Deseja fazer alguma alteração nos valores? (S/N): ').lower()
+		# ToDo  Ask if wants to change
+		#   Read values
+		#   Call sensibility_analysis
+		decision_var = [ 4,5]
+		constraints = [[1,0], [0,2],[2,2]]
+		result = [4,24,18]
+		self.sensibility_analysis(
+			self.simplex_iter[-1],  # last tableau
+			decision_var,           # new decision variables
+			constraints,       # new constrains
+			result             # new results
+		)
 
-		if (resp=='s'):
-			self.read_new_data()
-			# Processar dados, passando o último tableau
-		else:
-			exit(0)
+		# resp = None
+		# while resp not in ('s', 'n'):
+		# 	resp = input('Deseja fazer alguma alteração nos valores? (S/N): ').lower()
+		#
+		# if (resp=='s'):
+		# 	self.read_new_data()
+		# 	# Processar dados, passando o último tableau
+		# else:
+		# 	exit(0)
 
 
 
@@ -648,8 +712,8 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
-	my_solver.exec_solver()
+	simplex_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
+	simplex_solver.exec_solver()
 
 
 # b = np.array([(1.5,2,3), (4,5,6)], dtype = float)
