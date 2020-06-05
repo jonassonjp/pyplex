@@ -68,6 +68,8 @@ class PyplexSolver():
 		self.verbose = verb
 		self.shadow_price = list()
 
+		self.simplex_iter
+
 		if max_min == 'min':
 			#Transpose var and set to decision var and constraints
 			self.decision_var = result
@@ -461,17 +463,29 @@ class PyplexSolver():
 
 		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
 
-	def create_table(self):
-		pass
-		# return numpy table
+
+	def read_new_data(self):
+		print("Ler dados")
+
 
 	def exec_solver(self, ):
 		# if self.max_min.lower() == 'min':
 		# 	self.exec_minimize()
 		# else:
 		# 	self.exec_maximize()
-		self.exec_maximize()
-		self.print_results()
+		# self.exec_maximize()
+		# self.print_results()
+
+		resp = None
+		while resp not in ('s', 'n'):
+			resp = input('Deseja fazer alguma alteração nos valores? (S/N): ').lower()
+
+		if (resp=='s'):
+			self.read_new_data()
+			# Processar dados, passando o último tableau
+		else:
+			exit(0)
+
 
 
 
