@@ -59,10 +59,10 @@ class PyplexSolver():
 	def __init__(self,  dec_vars, const, ineq, result, max_min='max', verb=False):
 		# Holds the table for all the iterations (for debug and verbose purpose)
 		self.simplex_iter = list()
-		self.decision_var=dec_vars
-		self.constraints=const
-		self.inequations=ineq
-		self.result=result
+		self.decision_var = dec_vars
+		self.constraints = const
+		self.inequations = ineq
+		self.result = result
 		self.max_min = max_min
 		# if true will print every iteration
 		self.verbose = verb
@@ -528,8 +528,8 @@ if __name__ == "__main__":
 	if type_obj_function not in ('max', 'min'):
 		type_obj_function = 'max'
 
-	my_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
-	my_solver.exec_solver()
+	simplex_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
+	simplex_solver.exec_solver()
 
 
 # b = np.array([(1.5,2,3), (4,5,6)], dtype = float)
