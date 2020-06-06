@@ -265,51 +265,48 @@ class PyplexSolver():
 		#Todo Minimize Z row must be the last row
 
 
+	def calc_maximize_tableau(self, tableau):
+		number_col = tableau.num_columns
+		# Discover the pivot column
+		pivot_c = self.next_pivot_column(tableau.table)
+		if self.verbose: print('Pivot Column: {}'.format(pivot_c))
+
+		# Discover the pivot row
+		pivot_r = self.next_pivot_row(tableau.table, pivot_c)
+		if self.verbose: print('Pivot Row: {}'.format(pivot_r))
+
+		# Discover the pivot number
+		pivot_number = tableau.table[pivot_r][pivot_c]
+		if self.verbose: print('Pivot Number: {}'.format(pivot_number))
+
+		# Create the new tableau
+		new_tableau = tableau.copy()
+
+		# Divide the new line by the pivot number
+		new_pivot_line = self.div_array(
+			new_tableau.table[pivot_r],
+			np.full((1, number_col), pivot_number, dtype=float)
+		)
+		# table[pivot_r] = new_pivot_line
+		if self.verbose: print("New pivot line: {}".format(new_pivot_line))
+
+		new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, pivot_number)
+		if self.verbose:
+			print("Table: ")
+			tableau.print_tableau()
+
+		return new_tableau
+
 	def exec_maximize(self):
-		# Number of columns
-		number_col=self.simplex_iter[0].num_columns
-		# number_row=len(tabela[:,0])
 
 		print('Maximize')
 		i =0
 
 		while self.optimality_check(self.simplex_iter[i].table[0]):
-
-			if self.verbose: print(self.simplex_iter[i].print_tableau())
-
-			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
-			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
-
-			# Discover the pivot row
-			pivot_r = self.next_pivot_row(self.simplex_iter[i].table, pivot_c)
-			if self.verbose: print('Pivot Row: {}'.format(pivot_r))
-
-			# Discover the pivot number
-			self.pivot_number = self.simplex_iter[i].table[pivot_r][pivot_c]
-			if self.verbose: print('Pivot Number: {}'.format(self.pivot_number))
-
-			# Create the new tableau
-			new_tableau = self.simplex_iter[i].copy()
-
-			# Divide the new line by the pivot number
-			new_pivot_line = self.div_array(
-					new_tableau.table[pivot_r],
-					np.full((1,number_col), self.pivot_number, dtype=float)
-			)
-			# table[pivot_r] = new_pivot_line
-			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
-
-			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, self.pivot_number)
-			if self.verbose:
-				print("Table: ")
-				self.simplex_iter[i].print_tableau()
-
-			self.simplex_iter.append(new_tableau)
+			# Adds to an array the new calculated tableau
+			self.simplex_iter.append(self.calc_maximize_tableau(self.simplex_iter[i]))
 			i += 1
-			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
-			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
+
 
 
 	def print_optimal_solution(self):
