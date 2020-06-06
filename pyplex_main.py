@@ -461,13 +461,13 @@ class PyplexSolver():
 
 
 
-	def sensibility_analysis(self, final_tableau, decision_vars, constraints_coef, result):
+	def sensibility_analysis(self, final_tableau_original, decision_vars, constraints_coef, result):
 
 
 
 		# Slack var values (final tableau) y*
-		y_as_ind = {i for i, s in enumerate(final_tableau.table_columns_names) if 'S' in s}
-		y_as = np.array([final_tableau.table[0][i] for i in y_as_ind])
+		y_as_ind = {i for i, s in enumerate(final_tableau_original.table_columns_names) if 'S' in s}
+		y_as = np.array([final_tableau_original.table[0][i] for i in y_as_ind])
 
 		# Z* Z_as = y_as * b_mod
 		b_mod = np.transpose(result)
@@ -478,27 +478,34 @@ class PyplexSolver():
 		rows_const_array = len(constraints_coef)
 		cols_const_array = len(constraints_coef[0])
 		A_mod = np.array(constraints_coef)
-		c_mod = final_tableau.table[0,0:cols_const_array]
+		c_mod = final_tableau_original.table[0, 0:cols_const_array]
 
 		# Calc objective function coef. (y_as * A_mod - c_mod)
 		c_calc = np.dot(y_as, A_mod) - decision_vars
 
-		S_as = final_tableau.table[1:, min(y_as_ind):-1]
+		S_as = final_tableau_original.table[1:, min(y_as_ind):-1]
 
 		# Matrix from constraint vars
 		A_as = np.dot(S_as, A_mod)
 
-		# Result
+		# Result b* = S* x b_mod
 		b_as = np.dot(S_as, b_mod)
-		b_as = np.transpose(b_as)
+		b_as = b_as.reshape(len(b_as),1)
 
 		# Build the matrix
-		tableau_mod = final_tableau.copy()
-		tableau_mod.table[0][-1] = Z_as
+		tableau_revised = final_tableau_original.copy()
+		tableau_revised.table[0][-1] = Z_as                         # Z*
+		tableau_revised.table[0][0:len(decision_vars)] = c_calc     # c
+		tableau_revised.table[1:, 0:len(decision_vars)] = A_as      # A*
+		tableau_revised.table[1:, -1:] = b_as                       # b*
 
-
-		print ('A :{}'.format(A_mod))
-		print ('y* :{}'.format(c_mod))
+		print('-' * 30)
+		print('Tableu Final Original: ')
+		final_tableau_original.print_tableau()
+		print('\n')
+		print('-' * 30)
+		print('Tableu Inicial Modificado: ')
+		tableau_revised.print_tableau()
 
 
 
