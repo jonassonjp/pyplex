@@ -170,8 +170,6 @@ class PyplexSolver():
 		table = tableau.table
 		num_rows = next_tableau.num_rows
 		num_cols = next_tableau.num_columns
-		# num_rows = len(table[:,0])
-		# num_cols = len(table[0, :])
 		pivot_line = np.array(table[pivot_row_coef], dtype=float)
 		pivot_numb_array = np.full((1, num_cols),pivot_number, dtype=float)
 		pivot_line = np.divide(pivot_line, pivot_numb_array)
@@ -265,51 +263,40 @@ class PyplexSolver():
 		#Todo Minimize Z row must be the last row
 
 
-	def exec_maximize(self):
-		# Number of columns
-		number_col=self.simplex_iter[0].num_columns
-		# number_row=len(tabela[:,0])
+	def exec_maximize(self,initial_tab):
+		tableau_list = list()
+		tableau_list.append(initial_tab)
 
 		print('Maximize')
 		i =0
-
-		while self.optimality_check(self.simplex_iter[i].table[0]):
-
-			if self.verbose: print(self.simplex_iter[i].print_tableau())
+		while self.optimality_check(tableau_list[i].table[0]):
 
 			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
+			pivot_c = self.next_pivot_column(tableau_list[i].table)
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
 
 			# Discover the pivot row
-			pivot_r = self.next_pivot_row(self.simplex_iter[i].table, pivot_c)
+			pivot_r = self.next_pivot_row(tableau_list[i].table, pivot_c)
 			if self.verbose: print('Pivot Row: {}'.format(pivot_r))
 
 			# Discover the pivot number
-			self.pivot_number = self.simplex_iter[i].table[pivot_r][pivot_c]
-			if self.verbose: print('Pivot Number: {}'.format(self.pivot_number))
+			pivot_number = tableau_list[i].table[pivot_r][pivot_c]
+			if self.verbose: print('Pivot Number: {}'.format(pivot_number))
 
 			# Create the new tableau
-			new_tableau = self.simplex_iter[i].copy()
+			new_tableau = tableau_list[i].copy()
 
-			# Divide the new line by the pivot number
-			new_pivot_line = self.div_array(
-					new_tableau.table[pivot_r],
-					np.full((1,number_col), self.pivot_number, dtype=float)
-			)
-			# table[pivot_r] = new_pivot_line
-			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
-
-			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, self.pivot_number)
+			# Calculates the next round tableau
+			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, pivot_number)
 			if self.verbose:
 				print("Table: ")
 				self.simplex_iter[i].print_tableau()
 
-			self.simplex_iter.append(new_tableau)
+			# Adds the new tableau to the iteration list
+			tableau_list.append(new_tableau)
 			i += 1
-			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
-			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
+
+		return tableau_list # list of all iteraction
 
 
 	def print_optimal_solution(self):
@@ -368,7 +355,8 @@ class PyplexSolver():
 		# 	self.exec_minimize()
 		# else:
 		# 	self.exec_maximize()
-		self.exec_maximize()
+
+		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 		self.print_results()
 
 # Creates an matrix/table with zeros
