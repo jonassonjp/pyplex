@@ -203,48 +203,49 @@ class PyplexSolver():
 		#change
 		#self.exec_maximize()
 
-	def exec_minimize(self):
-		print("Minimize on it's way..." )
+	def exec_minimize(self, initial_tab):
+		# print("Minimize on it's way..." )
+		#
+		# # Checks for inequalities
+		# if 'L' in self.inequations:
+		# 	print('Begin two phase method')
+		# 	exit(0)
 
-		# Checks for inequalities
-		if 'L' in self.inequations:
-			print('Begin two phase method')
-			exit(0)
+		tableau_list = list()
+		tableau_list.append(initial_tab)
 
-		# # We will create a new first table for solving Minimizing problems
-		# new_tableau = self.simplex_iter[0].copy()
-		# # Swap the Z line with the last one
-		# temp_Z_line=np.array(new_tableau.table[0], dtype=float)
-		# new_tableau.table[0] = new_tableau.table[-1]
-		# new_tableau.table[-1] = temp_Z_line
-		#
-		#
-		# # Swap the Z line label the last one
-		# temp_row_label = new_tableau.table_rows_names[0]
-		# new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
-		# new_tableau.table_rows_names[-1] = temp_row_label
-		#
-		# # Transpose the new created matrix
-		# new_tableau.table = np.transpose(new_tableau.table)
-		#
-		# new_tableau.num_rows = np.size(new_tableau.table, 0)
-		# new_tableau.num_columns = np. size(new_tableau.table, 1)
-		#
-		# # Creates the labels for the new tableau
-		# new_tableau.table_rows_names = list()
-		# new_tableau.table_columns_names_names = list()
-		# for x in range(1, len(self.decision_var)+1):
-		# 	new_tableau.table_columns_names.append('X{}'.format(x))
-		#
-		# for x in range(1, len(self.constraints)+1):
-		# 	new_tableau.table_columns_names.append('S{}'.format(x))
-		# 	new_tableau.table_rows_names.append('S{}'.format(x))
-		# new_tableau.table_rows_names.append('Z')
-		#
-		# new_tableau.table_columns_names.append('b')
-		#
-		#
-		# self.simplex_iter[0] = new_tableau
+		# We will create a new first table for solving Minimizing problems
+		new_tableau = tableau_list.copy()
+		# Swap the Z line with the last one
+		temp_Z_line=np.array(new_tableau.table[0], dtype=float)
+		new_tableau.table[0] = new_tableau.table[-1]
+		new_tableau.table[-1] = temp_Z_line
+
+		# Swap the Z line label the last one
+		temp_row_label = new_tableau.table_rows_names[0]
+		new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
+		new_tableau.table_rows_names[-1] = temp_row_label
+
+		# Transpose the new created matrix
+		new_tableau.table = np.transpose(new_tableau.table)
+
+		new_tableau.num_rows = np.size(new_tableau.table, 0)
+		new_tableau.num_columns = np.size(new_tableau.table, 1)
+
+		# Creates the labels for the new tableau
+		new_tableau.table_rows_names = list()
+		new_tableau.table_columns_names_names = list()
+		for x in range(1, len(self.decision_var)+1):
+			new_tableau.table_columns_names.append('X{}'.format(x))
+
+		for x in range(1, len(self.constraints)+1):
+			new_tableau.table_columns_names.append('S{}'.format(x))
+			new_tableau.table_rows_names.append('S{}'.format(x))
+		new_tableau.table_rows_names.append('Z')
+
+		new_tableau.table_columns_names.append('b')
+
+		return self.exec_maximize(new_tableau)
 
 		#ToDo Minimize
 		# DONE: Swap the Z line with the last one
@@ -351,12 +352,11 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, ):
-		# if self.max_min.lower() == 'min':
-		# 	self.exec_minimize()
-		# else:
-		# 	self.exec_maximize()
+		if self.max_min.lower() == 'min':
+			self.simplex_iter = self.exec_minimize(self.simplex_iter[0])
+		else:
+			self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 
-		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 		self.print_results()
 
 # Creates an matrix/table with zeros
