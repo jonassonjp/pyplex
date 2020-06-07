@@ -203,7 +203,7 @@ class PyplexSolver():
 		#change
 		#self.exec_maximize()
 
-	def exec_minimize(self, initial_tab):
+	def exec_minimize(self):
 		print("Minimize on it's way..." )
 
 		# Checks for inequalities
