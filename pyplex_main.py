@@ -221,6 +221,10 @@ class PyplexSolver():
 
 
 	def two_phase_method(self, dec_vars, constraints, right_hand_side):
+		"""
+			two_phase_method: Resolving no standard PL problems in two phases
+		"""
+
 		print('Initiating two phase method')
 		print('Phase 1')
 		# Set initial tableau
@@ -228,9 +232,13 @@ class PyplexSolver():
 
 		print('Phase 2')
 		#change
-		#self.exec_maximize()
+		exit(-1)
 
 	def exec_minimize(self):
+		"""
+			exec_minimize: Resolvs minimizing problems
+		"""
+
 		print("Minimize on it's way..." )
 
 		# Checks for inequalities
@@ -457,7 +465,7 @@ class PyplexSolver():
 
 		# Z* Z_as = y_as * b_mod
 		b_mod = np.transpose(result)
-		Z_as = np.dot(y_as,b_mod)
+		Z_as = np.dot(y_as, b_mod)
 
 
 
@@ -485,12 +493,18 @@ class PyplexSolver():
 		tableau_revised.table[1:, 0:len(decision_vars)] = A_as      # A*
 		tableau_revised.table[1:, -1:] = b_as                       # b*
 
-		print('-' * 30)
-		print('Tableu Final Original: ')
+		width_column = 60
+		print('\n\n')
+		print('=' * width_column, '\n\t\tS E N S I B I L I D A D E')
+		print('-' * width_column)
+
+		print('  Tableu Final Original: ')
+		print('.' * width_column)
 		final_tableau_original.print_tableau()
 		print('\n')
-		print('-' * 30)
-		print('Tableu Inicial Modificado: ')
+		print('-' * width_column)
+		print('  Tableu Inicial Modificado: ')
+		print('.' * width_column)
 		tableau_revised.print_tableau()
 
 
@@ -523,7 +537,6 @@ class PyplexSolver():
 		# 	self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 
 		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
-
 		self.print_results()
 
 		# ToDo  Implement read values from user input
@@ -642,7 +655,7 @@ def print_help_parameters():
 	print('\th: Prints this help')
 	print('\tc: Objective function coefficients')
 	print('\tA: Matrix of the constraints (coefficients)')
-	print('\ti: Inequations (E, L, G)')
+	print('\ti: Inequalities (E, L, G)')
 	print('\tb: Result of the constraints equation (Ax <= r )')
 	print('\tp: Type of objective function (max or min)')
 	print('\tv: Verbose mode. Prints out every iteration')
@@ -693,13 +706,6 @@ if __name__ == "__main__":
 		elif opt in ("-d"):
 			debug = arg.strip()
 
-	# if debug.lower() == 'true':
-	# 	decision_vars = []
-	# 	constraints_coef = []
-	# 	result_equation = []
-	# 	print("DEBUG mode - values are fixed")
-	# 	sys.exit()
-
 	verbose = True if verb_arg.lower() == 'true' else False
 
 	if not decision_vars or not constraints_coef or not result_equation or not inequalities:
@@ -713,44 +719,3 @@ if __name__ == "__main__":
 
 	simplex_solver = PyplexSolver(decision_vars, constraints_coef, inequalities, result_equation, type_obj_function, verbose)
 	simplex_solver.exec_solver()
-
-
-# b = np.array([(1.5,2,3), (4,5,6)], dtype = float)
-# Matrix com variaveis de folga
-# g = np.eye(3)
-# np.column_stack((d, g))
-
-
-	#
-	# decision_variables = list()
-	# constraint_list = list()
-	#
-	# decision_variables = read_decision_vars()
-	# print_decision_vars(decision_variables)
-	#
-	# constraint_list= read_constraintis(len(decision_variables))
-	# print_constraints(constraint_list)
-
-# number_col=len(tabela[0,:])
-# number_row=len(tabela[:,0])
-
-# m = gen_matrix(2,2)
-# constrain(m,'2,-1,G,10')
-# constrain(m,'1,1,L,20')
-# obj(m,'5,10,0')
-# print(maxz(m))
-#
-# m = gen_matrix(2,4)
-# constrain(m,'2,5,G,30')
-# constrain(m,'-3,5,G,5')
-# constrain(m,'8,3,L,85')
-# constrain(m,'-9,7,L,42')
-# obj(m,'2,7,0')
-# print(minz(m))
-#
-# for i in range(1, alunos + 1):
-#     nota = input("Coloque a nota do aluno " + str(i) + ":" )
-#     notas.append(nota)
-
-#Como dividir por zero - testar
-# c = np.divide(a, b, out=np.zeros_like(a), where=b != 0)
