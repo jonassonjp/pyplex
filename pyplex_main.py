@@ -61,7 +61,7 @@ class PyplexSolver():
 		self.simplex_iter = list()
 		self.decision_var = dec_vars
 		self.constraints = const
-		self.inequations = ineq
+		self.inequalities = ineq
 		self.result = result
 		self.max_min = max_min
 		# if true will print every iteration
@@ -74,7 +74,7 @@ class PyplexSolver():
 			self.constraints = np.transpose(np.array(self.constraints))
 			self.constraints = self.constraints.tolist()
 
-		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequations, self.result)
+		first_tableau = self.generate_first_tableau(self.decision_var, self.constraints, self.inequalities, self.result)
 		self.simplex_iter.append(first_tableau)
 		self.pivot_number = 0
 
@@ -88,7 +88,7 @@ class PyplexSolver():
 		"""
 		self.decision_var=dec_vars
 		self.constraints=const
-		self.inequations=ineq
+		self.inequalities=ineq
 		tableau = PyplexTableau(len(dec_vars),len(const))
 		tableau.table_rows_names.append('Z')
 		for x in range(1, len(dec_vars)+1):
@@ -204,48 +204,48 @@ class PyplexSolver():
 		#self.exec_maximize()
 
 	def exec_minimize(self, initial_tab):
-		# print("Minimize on it's way..." )
+		print("Minimize on it's way..." )
+
+		# Checks for inequalities
+		if 'L' in self.inequalities:
+			print('Begin two phase method')
+			exit(0)
+
+		# tableau_list = list()
+		# tableau_list.append(initial_tab)
 		#
-		# # Checks for inequalities
-		# if 'L' in self.inequations:
-		# 	print('Begin two phase method')
-		# 	exit(0)
-
-		tableau_list = list()
-		tableau_list.append(initial_tab)
-
-		# We will create a new first table for solving Minimizing problems
-		new_tableau = tableau_list.copy()
-		# Swap the Z line with the last one
-		temp_Z_line=np.array(new_tableau.table[0], dtype=float)
-		new_tableau.table[0] = new_tableau.table[-1]
-		new_tableau.table[-1] = temp_Z_line
-
-		# Swap the Z line label the last one
-		temp_row_label = new_tableau.table_rows_names[0]
-		new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
-		new_tableau.table_rows_names[-1] = temp_row_label
-
-		# Transpose the new created matrix
-		new_tableau.table = np.transpose(new_tableau.table)
-
-		new_tableau.num_rows = np.size(new_tableau.table, 0)
-		new_tableau.num_columns = np.size(new_tableau.table, 1)
-
-		# Creates the labels for the new tableau
-		new_tableau.table_rows_names = list()
-		new_tableau.table_columns_names_names = list()
-		for x in range(1, len(self.decision_var)+1):
-			new_tableau.table_columns_names.append('X{}'.format(x))
-
-		for x in range(1, len(self.constraints)+1):
-			new_tableau.table_columns_names.append('S{}'.format(x))
-			new_tableau.table_rows_names.append('S{}'.format(x))
-		new_tableau.table_rows_names.append('Z')
-
-		new_tableau.table_columns_names.append('b')
-
-		return self.exec_maximize(new_tableau)
+		# # We will create a new first table for solving Minimizing problems
+		# new_tableau = tableau_list.copy()
+		# # Swap the Z line with the last one
+		# temp_Z_line=np.array(new_tableau.table[0], dtype=float)
+		# new_tableau.table[0] = new_tableau.table[-1]
+		# new_tableau.table[-1] = temp_Z_line
+		#
+		# # Swap the Z line label the last one
+		# temp_row_label = new_tableau.table_rows_names[0]
+		# new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
+		# new_tableau.table_rows_names[-1] = temp_row_label
+		#
+		# # Transpose the new created matrix
+		# new_tableau.table = np.transpose(new_tableau.table)
+		#
+		# new_tableau.num_rows = np.size(new_tableau.table, 0)
+		# new_tableau.num_columns = np.size(new_tableau.table, 1)
+		#
+		# # Creates the labels for the new tableau
+		# new_tableau.table_rows_names = list()
+		# new_tableau.table_columns_names_names = list()
+		# for x in range(1, len(self.decision_var)+1):
+		# 	new_tableau.table_columns_names.append('X{}'.format(x))
+		#
+		# for x in range(1, len(self.constraints)+1):
+		# 	new_tableau.table_columns_names.append('S{}'.format(x))
+		# 	new_tableau.table_rows_names.append('S{}'.format(x))
+		# new_tableau.table_rows_names.append('Z')
+		#
+		# new_tableau.table_columns_names.append('b')
+		#
+		# return self.exec_maximize(new_tableau)
 
 		#ToDo Minimize
 		# DONE: Swap the Z line with the last one
@@ -268,7 +268,7 @@ class PyplexSolver():
 		tableau_list = list()
 		tableau_list.append(initial_tab)
 
-		print('Maximize')
+		print('Initializing maximize method')
 		i =0
 		while self.optimality_check(tableau_list[i].table[0]):
 
@@ -304,12 +304,20 @@ class PyplexSolver():
 		# Gets the last table in the iteration list
 		final_tableau = self.simplex_iter[-1]
 
-		dec_vars_list = final_tableau.table_rows_names
-		# Grab all the desicion variables from the last tableau
-		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
 
-		# Slack, Suplus Variables if any
-		other_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
+		if self.max_min == 'max':
+			dec_vars_list = final_tableau.table_rows_names
+			# Grab all the desicion variables from the last tableau
+			decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
+			# Slack, Suplus Variables if any
+			other_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
+
+		elif self.max_min == 'min':
+			dec_vars_list = final_tableau.table_columns_names
+			# Grab all the desicion variables from the last tableau
+			decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
+			# Slack, Suplus Variables if any
+			other_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'X' in s}
 
 		# Order the decision variables
 		decision_in_solution = {i: decision_in_solution[i] for i in sorted(decision_in_solution)}
@@ -318,12 +326,18 @@ class PyplexSolver():
 
 		print('Z\t= {:.2f}'.format(final_tableau.table[0][-1]))
 
-		for key, value in decision_in_solution.items():
-			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
-		# Prints the other varibles in the solution
-		for key, value in other_variables.items():
-			print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
-
+		if self.max_min == 'max':
+			for key, value in decision_in_solution.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+			# Prints the other varibles in the solution
+			for key, value in other_variables.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[value][-1]))
+		elif self.max_min == 'min':
+			for key, value in decision_in_solution.items():
+				print('{}\t= {:.2f}'.format(key, final_tableau.table[0][value]))
+			# # Prints the other varibles in the solution
+			# for key, value in other_variables.items():
+			# 	print('{}\t= {:.2f}'.format(key, final_tableau.table[0][value]))
 
 	def print_results(self):
 		clear_screen()
@@ -352,10 +366,13 @@ class PyplexSolver():
 		# return numpy table
 
 	def exec_solver(self, ):
-		if self.max_min.lower() == 'min':
-			self.simplex_iter = self.exec_minimize(self.simplex_iter[0])
-		else:
-			self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
+		# The minimization tableau is createad in the PyPlex constructor
+		# if self.max_min.lower() == 'min':
+		# 	self.simplex_iter = self.exec_minimize(self.simplex_iter[0])
+		# else:
+		# 	self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
+
+		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 
 		self.print_results()
 
@@ -475,7 +492,7 @@ if __name__ == "__main__":
 		options, args = getopt.getopt(argv, "hc:A:i:b:p:v:d", ["c=", "A=", "i=", "b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
-				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
+				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequalities> -b <vector> -p <obj_func_type> ' +
 				'-v <verbose-True-False>'
 		)
 		sys.exit(2)
