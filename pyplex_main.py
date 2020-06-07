@@ -194,8 +194,6 @@ class PyplexSolver():
 		table = tableau.table
 		num_rows = next_tableau.num_rows
 		num_cols = next_tableau.num_columns
-		# num_rows = len(table[:,0])
-		# num_cols = len(table[0, :])
 		pivot_line = np.array(table[pivot_row_coef], dtype=float)
 		pivot_numb_array = np.full((1, num_cols),pivot_number, dtype=float)
 		pivot_line = np.divide(pivot_line, pivot_numb_array)
@@ -257,7 +255,7 @@ class PyplexSolver():
 		# new_tableau.table = np.transpose(new_tableau.table)
 		#
 		# new_tableau.num_rows = np.size(new_tableau.table, 0)
-		# new_tableau.num_columns = np. size(new_tableau.table, 1)
+		# new_tableau.num_columns = np.size(new_tableau.table, 1)
 		#
 		# # Creates the labels for the new tableau
 		# new_tableau.table_rows_names = list()
@@ -272,8 +270,7 @@ class PyplexSolver():
 		#
 		# new_tableau.table_columns_names.append('b')
 		#
-		#
-		# self.simplex_iter[0] = new_tableau
+		# return self.exec_maximize(new_tableau)
 
 		#ToDo Minimize
 		# DONE: Swap the Z line with the last one
@@ -292,52 +289,41 @@ class PyplexSolver():
 		#Todo Minimize Z row must be the last row
 
 
-	def exec_maximize(self):
-		# Number of columns
-		number_col=self.simplex_iter[0].num_columns
-		# number_row=len(tabela[:,0])
+	def exec_maximize(self,initial_tab):
+		tableau_list = list()
+		tableau_list.append(initial_tab)
 
-		print('Maximize')
+		print('Initializing maximize method')
 		i =0
-
-		while self.optimality_check(self.simplex_iter[i].table[0]):
-
-			if self.verbose: print(self.simplex_iter[i].print_tableau())
+		while self.optimality_check(tableau_list[i].table[0]):
 
 			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
+			pivot_c = self.next_pivot_column(tableau_list[i].table)
 			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
 
 			# Discover the pivot row
-			pivot_r = self.next_pivot_row(self.simplex_iter[i].table, pivot_c)
+			pivot_r = self.next_pivot_row(tableau_list[i].table, pivot_c)
 			if self.verbose: print('Pivot Row: {}'.format(pivot_r))
 
 			# Discover the pivot number
-			self.pivot_number = self.simplex_iter[i].table[pivot_r][pivot_c]
-			if self.verbose: print('Pivot Number: {}'.format(self.pivot_number))
+			pivot_number = tableau_list[i].table[pivot_r][pivot_c]
+			if self.verbose: print('Pivot Number: {}'.format(pivot_number))
 
 			# Create the new tableau
-			new_tableau = self.simplex_iter[i].copy()
+			new_tableau = tableau_list[i].copy()
 
-			# Divide the new line by the pivot number
-			new_pivot_line = self.div_array(
-					new_tableau.table[pivot_r],
-					np.full((1,number_col), self.pivot_number, dtype=float)
-			)
-			# table[pivot_r] = new_pivot_line
-			if self.verbose: print("New pivot line: {}".format(new_pivot_line))
-
-			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, self.pivot_number)
+			# Calculates the next round tableau
+			new_tableau = self.next_round_tab(new_tableau, pivot_c, pivot_r, pivot_number)
 			if self.verbose:
 				print("Table: ")
 				self.simplex_iter[i].print_tableau()
 
-			self.simplex_iter.append(new_tableau)
+			# Adds the new tableau to the iteration list
+			tableau_list.append(new_tableau)
 			i += 1
-			# Discover the pivot column
-			pivot_c = self.next_pivot_column(self.simplex_iter[i].table)
-			if self.verbose: print('Pivot Column: {}'.format(pivot_c))
-		self.set_shadow_price(self.simplex_iter[-1])
+
+		return tableau_list # list of all iteraction
+
 
 	def print_optimal_solution(self):
 		# Gets the last table in the iteration list
@@ -527,14 +513,20 @@ class PyplexSolver():
 
 
 	def exec_solver(self, ):
+		"""
+			exec_solver: Does all the magic
+			Minimization problems are already transformed in the PyPlex constructor
+		"""
 		# if self.max_min.lower() == 'min':
-		# 	self.exec_minimize()
+		# 	self.simplex_iter = self.exec_minimize(self.simplex_iter[0])
 		# else:
-		# 	self.exec_maximize()
-		self.exec_maximize()
-		# self.print_results()
+		# 	self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 
-		# ToDo  Ask if wants to change
+		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
+
+		self.print_results()
+
+		# ToDo  Implement read values from user input
 		#   Read values
 		#   Call sensibility_analysis
 		decision_var = [ 4,5]
@@ -543,8 +535,8 @@ class PyplexSolver():
 		self.sensibility_analysis(
 			self.simplex_iter[-1],  # last tableau
 			decision_var,           # new decision variables
-			constraints,       # new constrains
-			result             # new results
+			constraints,            # new constrains
+			result                  # new results
 		)
 
 		# resp = None
@@ -678,7 +670,7 @@ if __name__ == "__main__":
 		options, args = getopt.getopt(argv, "hc:A:i:b:p:v:d", ["c=", "A=", "i=", "b=", "p=", "v=", "d="])
 	except getopt.GetoptError:
 		print(
-				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequations> -b <vector> -p <obj_func_type> ' +
+				'pyplex.py -c <vector-decision_variables> -A <constraints_coef> -i <inequalities> -b <vector> -p <obj_func_type> ' +
 				'-v <verbose-True-False>'
 		)
 		sys.exit(2)
