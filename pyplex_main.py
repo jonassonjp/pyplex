@@ -204,18 +204,17 @@ class PyplexSolver():
 		#self.exec_maximize()
 
 	def exec_minimize(self, initial_tab):
-		# print("Minimize on it's way..." )
-		#
-		# # Checks for inequalities
-		# if 'L' in self.inequations:
-		# 	print('Begin two phase method')
-		# 	exit(0)
+		"""
+			Minimization
+			This method consists of transforming the initial tableau (parameter initial_tab) in a standard max. form
+			and then calling the exec_mamiximize with the tableau transformed
+		"""
 
 		tableau_list = list()
 		tableau_list.append(initial_tab)
 
-		# We will create a new first table for solving Minimizing problems
-		new_tableau = tableau_list.copy()
+
+		Z_orig = initial_tab
 		# Swap the Z line with the last one
 		temp_Z_line=np.array(new_tableau.table[0], dtype=float)
 		new_tableau.table[0] = new_tableau.table[-1]
@@ -232,6 +231,12 @@ class PyplexSolver():
 		new_tableau.num_rows = np.size(new_tableau.table, 0)
 		new_tableau.num_columns = np.size(new_tableau.table, 1)
 
+
+
+		# We will generate a new first table for solving Minimizing problems
+		new_tableau = self.generate_first_tableau()
+
+
 		# Creates the labels for the new tableau
 		new_tableau.table_rows_names = list()
 		new_tableau.table_columns_names_names = list()
@@ -247,21 +252,15 @@ class PyplexSolver():
 
 		return self.exec_maximize(new_tableau)
 
-		#ToDo Minimize
-		# DONE: Swap the Z line with the last one
-		# DONE: Swap the Z line label the last one
-		# Create the new labels
-		# Transpose the matrix
-		# Add the matrix to the list of iterations
-		# Maximize the matrix
-		# See results
-		# Maybe needs to invert the lines again
-
-
+		#Todo Minimize - extract Z line and transform (transpose) to b (result)
+		#Todo Minimize - extract A matrix and transform (transpose) to A_mod
+		#Todo Minimize - extract b (result) and transform (transpose) to Z_mod
+		#Todo Minimize - compose matrix
+		#Todo Minimize - call maximize with new matrix
+		#Todo Minimize - watch for the X and S labels
 
 
 		#Todo Minimize Implement Two Phase Method
-		#Todo Minimize Z row must be the last row
 
 
 	def exec_maximize(self,initial_tab):
