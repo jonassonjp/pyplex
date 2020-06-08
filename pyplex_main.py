@@ -454,10 +454,37 @@ class PyplexSolver():
 		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
 
 
+	def convert_gaussian(self, tableau):
+		converted_tableau = tableau
+
+		row_elements =  tableau.table_rows_names
+		col_elements =  tableau.table_columns_names
+		# Get the index of all variabels in the row
+		vars_row = {row_elements[i]: i for i, s in enumerate(row_elements) if s != 'Z'}
+		# Get the index of all variabels in the columns
+		vars_col  = {col_elements[i]: i for i, s in enumerate(col_elements) if s != 'b'}
+		# Scanning the table for the elements we need to turn into 1
+		elements = dict()
+
+		for key in vars_row:
+			elements[vars_row[key]]=(vars_row[key], vars_col[key])
+
+		for key, value in elements.items():
+			new_row = tableau.table[key]
+			pivot_element = np.full((1,len(new_row)),tableau.table[value],dtype=float)
+			new_row = np.divide(new_row, pivot_element)
+			converted_tableau.table[key] = new_row
+
+
+
+
+
+
+
+
+		return converted_tableau
 
 	def sensibility_analysis(self, final_tableau_original, decision_vars, constraints_coef, result):
-
-
 
 		# Slack var values (final tableau) y*
 		y_as_ind = {i for i, s in enumerate(final_tableau_original.table_columns_names) if 'S' in s}
@@ -507,13 +534,12 @@ class PyplexSolver():
 		print('.' * width_column)
 		tableau_revised.print_tableau()
 
-		max_tableau = self.exec_maximize(tableau_revised)
+		converted_tableau = self.convert_gaussian(tableau_revised)
 
 		print('\n')
 		print('-' * width_column)
 		print('  Maximized Tableau: ')
 		print('.' * width_column)
-		max_tableau.print_tableau()
 
 		# ToDo Remove after
 		exit(0)
