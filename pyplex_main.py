@@ -507,9 +507,16 @@ class PyplexSolver():
 		print('.' * width_column)
 		tableau_revised.print_tableau()
 
+		max_tableau = self.exec_maximize(tableau_revised)
 
+		print('\n')
+		print('-' * width_column)
+		print('  Maximized Tableau: ')
+		print('.' * width_column)
+		max_tableau.print_tableau()
 
-		pass
+		# ToDo Remove after
+		exit(0)
 		# sdadasd
 		# Read New Values
 		# Calc new Values
@@ -520,11 +527,28 @@ class PyplexSolver():
 		# Re-optimization
 		# self.sensi_analysis_iter = list()
 
+	def read_user_values(self):
+		values = dict()
+		cont_read = True
+		while cont_read:
+			print('Enter the  values separating them by colons.')
+			print('Example: 1,2,3')
+			dec_vars = list(map(int,input("Decision variables: ").strip().split(',')))
+			numb_const = int(input('How many constrains: '))
+			const = list()
+			for i in range(numb_const):
+				const.append(list(map(int,input("Constraint #{}: ".format(i+1)).strip().split(','))))
+			results = list(map(int,input("Results {}(right hand side): ".format(numb_const)).strip().split(',')))
+			values['dec_vars'] = dec_vars
+			values['const'] = const
+			values['result'] = results
 
-
-	def read_new_data(self):
-		print("Ler dados")
-
+			print('Values:')
+			for key, value in values.items():
+				print('\t{} = \t{}'.format(key, values[key]))
+			confirm_ok = str(input('Confirm values?([Y]|n): ') or "Y")
+			cont_read = False if confirm_ok in ('Y','y') else True
+		return values
 
 	def exec_solver(self, ):
 		"""
@@ -536,20 +560,28 @@ class PyplexSolver():
 		# else:
 		# 	self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 
+
 		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 		self.print_results()
 
 		# ToDo  Implement read values from user input
 		#   Read values
 		#   Call sensibility_analysis
+		# clear_screen()
+		# input_values = self.read_user_values()
+		# decision_var = input_values['dec_vars']
+		# constraints = input_values['const']
+		# result = input_values['result']
+
 		decision_var = [ 4,5]
 		constraints = [[1,0], [0,2],[2,2]]
 		result = [4,24,18]
+
 		self.sensibility_analysis(
-			self.simplex_iter[-1],  # last tableau
-			decision_var,           # new decision variables
-			constraints,            # new constrains
-			result                  # new results
+			self.simplex_iter[-1],      # last tableau
+			decision_var,   # new decision variables
+			constraints,      # new constrains
+			result      # new results
 		)
 
 		# resp = None
