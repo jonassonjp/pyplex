@@ -457,18 +457,22 @@ class PyplexSolver():
 	def convert_gaussian(self, tableau):
 		converted_tableau = tableau
 
-		row_elements =  tableau.table_rows_names
-		col_elements =  tableau.table_columns_names
+		row_elem_name =  tableau.table_rows_names
+		col_elem_name =  tableau.table_columns_names
 		# Get the index of all variabels in the row
-		vars_row = {row_elements[i]: i for i, s in enumerate(row_elements) if s != 'Z'}
+		vars_row = {row_elem_name[i]: i for i, s in enumerate(row_elem_name) if s != 'Z'}
 		# Get the index of all variabels in the columns
-		vars_col  = {col_elements[i]: i for i, s in enumerate(col_elements) if s != 'b'}
-		# Scanning the table for the elements we need to turn into 1
-		elements = dict()
+		vars_col  = {col_elem_name[i]: i for i, s in enumerate(col_elem_name) if s != 'b'}
 
+		# Build a dictionary, where the key is the row label, and the value is the element (aij)
+		# in which needs to turn into 1
+		elements = dict()
+		selected_cols=list()
 		for key in vars_row:
 			elements[vars_row[key]]=(vars_row[key], vars_col[key])
+			selected_cols.append(vars_col[key])
 
+		# Scanning the table for the elements we need to turn into 1
 		for key, value in elements.items():
 			new_row = tableau.table[key]
 			pivot_element = np.full((1,len(new_row)),tableau.table[value],dtype=float)
@@ -477,8 +481,35 @@ class PyplexSolver():
 
 
 
+		# Going through all possible columns
+		# elements (dict) key=row_index, values=aij
+		# example: 1: (2,3)
+		for key, value in elements.items():
+			col_elements = converted_tableau.table[:,value[1]]  # value[1] is the column from aij element
+			pivot_line = converted_tableau.table[value[0],:]  # value[1] is the column from aij element
+			for index, col_value in np.ndenumerate(col_elements):
+				# check is its not the pivot value
+
+				new_line = converted_tableau.table[index]
+				multi_element = np.full((1, len(new_line)), converted_tableau.table[value], dtype=float)
+				new_line = new_line + np.dot(multi_element,pivot_line)
+				# index_of_i = np.where(col_elements == i)
+				# new_line =
 
 
+
+
+
+
+		# new_line = table[i] - (np.multiply(pivot_coef, pivot_line))
+		# Zerando os demais valores
+		# row_elem_values=dict()
+		# for i in selectec_cols:
+			# pivot_coef =
+			# sel_col_items=converted_tableau.table[0:,i]
+			# row_elem_values[]
+			# row_= converted_tableau.table[0:,i]
+			# elements[vars_row[key]]=(vars_row[key], vars_col[key])
 
 
 
@@ -493,8 +524,6 @@ class PyplexSolver():
 		# Z* Z_as = y_as * b_mod
 		b_mod = np.transpose(result)
 		Z_as = np.dot(y_as, b_mod)
-
-
 
 		rows_const_array = len(constraints_coef)
 		cols_const_array = len(constraints_coef[0])
