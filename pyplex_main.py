@@ -480,19 +480,21 @@ class PyplexSolver():
 			converted_tableau.table[key] = new_row
 
 
-
+		
 		# Going through all possible columns
 		# elements (dict) key=row_index, values=aij
 		# example: 1: (2,3)
 		for key, value in elements.items():
-			col_elements = converted_tableau.table[:,value[1]]  # value[1] is the column from aij element
+			selec_col_ind = value[1]
+			col_elements = converted_tableau.table[:,selec_col_ind]  # value[1] is the column from aij element
 			pivot_line = converted_tableau.table[value[0],:]  # value[1] is the column from aij element
 			for index, col_value in np.ndenumerate(col_elements):
-				# check is its not the pivot value
-
+				# check is its the pivot value
+				if value == (index[0],selec_col_ind):
+					continue
 				new_line = converted_tableau.table[index]
-				multi_element = np.full((1, len(new_line)), converted_tableau.table[value], dtype=float)
-				new_line = new_line + np.dot(multi_element,pivot_line)
+				multi_element = np.full((1, len(new_line)), col_value, dtype=float)
+				new_line = new_line - np.dot(multi_element,pivot_line)
 				# index_of_i = np.where(col_elements == i)
 				# new_line =
 
