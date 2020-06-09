@@ -238,6 +238,8 @@ class PyplexSolver():
 		"""
 			exec_minimize: Resolvs minimizing problems
 		"""
+		#Todo Minimize Implement Two Phase Method
+		#Todo Minimize Z row must be the last row
 
 		print("Minimize on it's way..." )
 
@@ -246,55 +248,6 @@ class PyplexSolver():
 			print('Begin two phase method')
 			exit(0)
 
-		# # We will create a new first table for solving Minimizing problems
-		# new_tableau = self.simplex_iter[0].copy()
-		# # Swap the Z line with the last one
-		# temp_Z_line=np.array(new_tableau.table[0], dtype=float)
-		# new_tableau.table[0] = new_tableau.table[-1]
-		# new_tableau.table[-1] = temp_Z_line
-		#
-		#
-		# # Swap the Z line label the last one
-		# temp_row_label = new_tableau.table_rows_names[0]
-		# new_tableau.table_rows_names[0] = new_tableau.table_rows_names[-1]
-		# new_tableau.table_rows_names[-1] = temp_row_label
-		#
-		# # Transpose the new created matrix
-		# new_tableau.table = np.transpose(new_tableau.table)
-		#
-		# new_tableau.num_rows = np.size(new_tableau.table, 0)
-		# new_tableau.num_columns = np.size(new_tableau.table, 1)
-		#
-		# # Creates the labels for the new tableau
-		# new_tableau.table_rows_names = list()
-		# new_tableau.table_columns_names_names = list()
-		# for x in range(1, len(self.decision_var)+1):
-		# 	new_tableau.table_columns_names.append('X{}'.format(x))
-		#
-		# for x in range(1, len(self.constraints)+1):
-		# 	new_tableau.table_columns_names.append('S{}'.format(x))
-		# 	new_tableau.table_rows_names.append('S{}'.format(x))
-		# new_tableau.table_rows_names.append('Z')
-		#
-		# new_tableau.table_columns_names.append('b')
-		#
-		# return self.exec_maximize(new_tableau)
-
-		#ToDo Minimize
-		# DONE: Swap the Z line with the last one
-		# DONE: Swap the Z line label the last one
-		# Create the new labels
-		# Transpose the matrix
-		# Add the matrix to the list of iterations
-		# Maximize the matrix
-		# See results
-		# Maybe needs to invert the lines again
-
-
-
-
-		#Todo Minimize Implement Two Phase Method
-		#Todo Minimize Z row must be the last row
 
 
 	def exec_maximize(self,initial_tab):
@@ -549,25 +502,30 @@ class PyplexSolver():
 		print('.' * width_column)
 		tableau_revised.print_tableau()
 
+		# Converts the tableau to the Gaussian form
 		converted_tableau = self.convert_gaussian(tableau_revised)
-
 		print('\n')
 		print('-' * width_column)
-		print('  Converted to Apropriate form: ')
+		print('  Convertida para a forma apropriada: ')
+		# print('  Converted to Apropriate form: ')
 		print('.' * width_column)
 		converted_tableau.print_tableau()
 
-		# ToDo Remove after
-		exit(0)
-		# sdadasd
-		# Read New Values
-		# Calc new Values
-		# Build New Tableau
-		# Calc simplex new tableau
-		# Viability test
-		# Optimaity test
-		# Re-optimization
-		# self.sensi_analysis_iter = list()
+		# Checks for non negative values in 'b' and in 'Z'
+		if self.optimality_check(converted_tableau.table[0:, -1:]):
+			elem = converted_tableau.table[0:, -1:]
+			neg_elem = elem[elem<0]
+			print('\n *** Solução nao viável pois possui elemento(s) negativo(s): {}'.format(neg_elem))
+
+		# and self.optimality_check(converted_tableau.table[0]):
+
+		# coef_z_line = converted_tableau[0]
+		# # Remove the last element, leaving just the coefficients
+		# coef_z_line = np.delete(coef_z_line, len(coef_z_line) - 1)
+		# # Check if all elements in this line is 0
+		# indexes = [i for i, x in enumerate(coef_z_line) if x != 0]
+
+
 
 	def read_user_values(self):
 		values = dict()
@@ -602,49 +560,37 @@ class PyplexSolver():
 		# else:
 		# 	self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 
-
 		self.simplex_iter = self.exec_maximize(self.simplex_iter[0])
 		self.print_results()
+
+		resp = None
+		while resp not in ('s', 'n', 'p'):
+			resp = str(input('\nDeseja fazer alguma alteração nos valores? (S/N): ') or 'p').lower()
+
+		# Preset values, testing case
+		decision_var = [4, 5]
+		constraints = [[1, 0], [0, 2], [2, 2]]
+		result = [4, 24, 18]
+
+		if resp == 's':
+			input_values = self.read_user_values()
+			decision_var = input_values['dec_vars']
+			constraints = input_values['const']
+			result = input_values['result']
+		elif resp == 'n':
+			exit(0)
+
+		self.sensibility_analysis(
+			self.simplex_iter[-1],      # last tableau
+			decision_var,               # new decision variables
+			constraints,                # new constrains
+			result                      # new results
+		)
 
 		# ToDo  Implement read values from user input
 		#   Read values
 		#   Call sensibility_analysis
-		# clear_screen()
-		# input_values = self.read_user_values()
-		# decision_var = input_values['dec_vars']
-		# constraints = input_values['const']
-		# result = input_values['result']
 
-		decision_var = [ 4,5]
-		constraints = [[1,0], [0,2],[2,2]]
-		result = [4,24,18]
-
-		self.sensibility_analysis(
-			self.simplex_iter[-1],      # last tableau
-			decision_var,   # new decision variables
-			constraints,      # new constrains
-			result      # new results
-		)
-
-		# resp = None
-		# while resp not in ('s', 'n'):
-		# 	resp = input('Deseja fazer alguma alteração nos valores? (S/N): ').lower()
-		#
-		# if (resp=='s'):
-		# 	self.read_new_data()
-		# 	# Processar dados, passando o último tableau
-		# else:
-		# 	exit(0)
-
-
-
-
-
-
-# Creates an matrix/table with zeros
-def create_matrix(num_col, num_rows):
-	table = np.full((num_rows, num_col),0)
-	return table
 
 def clear_screen():
 	"""
