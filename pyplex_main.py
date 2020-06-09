@@ -474,13 +474,13 @@ class PyplexSolver():
 
 		# Scanning the table for the elements we need to turn into 1
 		for key, value in elements.items():
-			new_row = tableau.table[key]
-			pivot_element = np.full((1,len(new_row)),tableau.table[value],dtype=float)
-			new_row = np.divide(new_row, pivot_element)
-			converted_tableau.table[key] = new_row
+			pivot_element = tableau.table[value]
+			if pivot_element != 1:
+				new_row = tableau.table[key]
+				pivot_element = np.full((1,len(new_row)),tableau.table[value],dtype=float)
+				new_row = np.divide(new_row, pivot_element)
+				converted_tableau.table[key] = new_row
 
-
-		
 		# Going through all possible columns
 		# elements (dict) key=row_index, values=aij
 		# example: 1: (2,3)
@@ -492,28 +492,12 @@ class PyplexSolver():
 				# check is its the pivot value
 				if value == (index[0],selec_col_ind):
 					continue
-				new_line = converted_tableau.table[index]
-				multi_element = np.full((1, len(new_line)), col_value, dtype=float)
-				new_line = new_line - np.dot(multi_element,pivot_line)
-				# index_of_i = np.where(col_elements == i)
-				# new_line =
-
-
-
-
-
-
-		# new_line = table[i] - (np.multiply(pivot_coef, pivot_line))
-		# Zerando os demais valores
-		# row_elem_values=dict()
-		# for i in selectec_cols:
-			# pivot_coef =
-			# sel_col_items=converted_tableau.table[0:,i]
-			# row_elem_values[]
-			# row_= converted_tableau.table[0:,i]
-			# elements[vars_row[key]]=(vars_row[key], vars_col[key])
-
-
+				# Only if the column value is not 0 or 1
+				if col_value not in (0,1):
+					old_line = converted_tableau.table[index]
+					multi_element = np.full(len(old_line), col_value, dtype=float)
+					new_line = old_line - np.multiply(multi_element,pivot_line)
+					converted_tableau.table[index] = new_line
 
 		return converted_tableau
 
@@ -569,8 +553,9 @@ class PyplexSolver():
 
 		print('\n')
 		print('-' * width_column)
-		print('  Maximized Tableau: ')
+		print('  Converted to Apropriate form: ')
 		print('.' * width_column)
+		converted_tableau.print_tableau()
 
 		# ToDo Remove after
 		exit(0)
