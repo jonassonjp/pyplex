@@ -67,6 +67,7 @@ class PyplexSolver():
 		# if true will print every iteration
 		self.verbose = verb
 		self.shadow_price = list()
+		self.constraint_limits = dict()
 
 		self.sensi_analysis_iter = list()
 
@@ -282,7 +283,8 @@ class PyplexSolver():
 			# Adds the new tableau to the iteration list
 			tableau_list.append(new_tableau)
 			i += 1
-
+		self.set_shadow_price(new_tableau)
+		self.set_constraint_limits(new_tableau)
 		return tableau_list # list of all iteraction
 
 
@@ -325,13 +327,12 @@ class PyplexSolver():
 				print('{}\t= {:.2f}'.format(key, final_tableau.table[0][value]))
 
 
-
-
 	def print_results(self):
 		clear_screen()
-		print('=' * 30)
-		print('\tR E S U L T S')
-		print('=' * 30)
+		col_width = 54
+		print('=' * col_width)
+		print('\t\tR E S U L T S')
+		print('=' * col_width)
 
 		print("Original matrix:")
 		print("Iteration #0")
@@ -352,7 +353,7 @@ class PyplexSolver():
 		# print('\nShadow price: \t'.join(shadow_price))
 
 		# ToDo Vê uma forma se vai perguntar se deseja imprimir os resultados agora
-		self.print_sensitivity_analysis()
+		self.print_sensitivity_analysis_report()
 
 
 	def set_shadow_price(self, last_tableau):
@@ -371,10 +372,33 @@ class PyplexSolver():
 			shadow_var_value[key] = last_tableau.table[0][value]
 		self.shadow_price = shadow_var_value
 
+	def set_constraint_limits(self, last_tableau):
+		b = last_tableau.table[1:,-1:]
+		b = np.dot(-1,b)
+		const_labels = last_tableau.table_columns_names
+		const_lables_n_position = dict()
+		const_lables_n_position = {const_labels[i]: i for i, s in enumerate(const_labels) if 'S' in s}
+		y_as_ind = {i for i, s in enumerate(last_tableau.table_columns_names) if 'S' in s}
+		S_as = last_tableau.table[1:, min(y_as_ind):-1]
+		delta_b = np.full((len(y_as_ind),1),0)
 
 
 
-	def print_sensitivity_analysis(self):
+		for i, key in enumerate(const_lables_n_position):
+			limit_values = list()
+			delta_b[i][0] = 1
+			S_Deltab = np.dot(S_as,delta_b)
+			result_b = np.zeros((len(y_as_ind),1))
+			for k, Bi in enumerate(S_Deltab):
+				result_b[k] = b[k][0] / Bi
+			limit_values.append(np.max(result_b))
+			limit_values.append(np.min(result_b))
+			delta_b = np.full((len(y_as_ind), 1), 0)
+			self.constraint_limits[key] = limit_values
+
+
+
+	def print_sensitivity_analysis_report(self):
 
 		# rhs_range = dict()
 		# tableau = self.simplex_iter[-1]
@@ -382,29 +406,94 @@ class PyplexSolver():
 		# 	rhs_range[tableau.table_columns_names[i]] = [1,2]
 		# print(rhs_range)
 		# exit(0)
+		final_tableau = self.simplex_iter[-1]
+		results = final_tableau.table[1:,-1:]
+		if self.max_min == 'max':
+			dec_var = 'X'
+			dec_vars_list = final_tableau.table_rows_names
+
+		elif self.max_min == 'min':
+			dec_var = 'Y'
+			dec_vars_list = final_tableau.table_columns_names
+
+		all_vars_list = final_tableau.table_columns_names
+		all_const_list = final_tableau.table_columns_names
+
+		# Create a dictionary with all the decision variables set to 0
+		all_dec_final_value = dict()
+		all_dec_final_value = {all_vars_list[i]: 0 for i, s in enumerate(all_vars_list) if dec_var in s}
+		all_dec_final_value = {i: all_dec_final_value[i] for i in sorted(all_dec_final_value)}
+
+		# Create a dictionary with all the constraints variables set to 0
+		all_const_final_value = dict()
+		all_const_final_value = {all_const_list[i]: 0 for i, s in enumerate(all_const_list) if 'S' in s}
+		all_const_final_value = {i: all_const_final_value[i] for i in sorted(all_const_final_value)}
+
+		# Slack, Suplus Variables if any
+		slack_variables = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if 'S' in s}
+		slack_variables = {i: slack_variables[i] for i in sorted(slack_variables)}
+
+		# Grab all the decision variables from the last tableau
+		decision_in_solution = {dec_vars_list[i]: i for i, s in enumerate(dec_vars_list) if dec_var in s}
+
+		if self.max_min == 'max':
+			for key, value in decision_in_solution.items():
+				all_dec_final_value[key]=final_tableau.table[value][-1]
+
+			for key, value in slack_variables.items():
+				all_const_final_value[key]=final_tableau.table[value][-1]
+		elif self.max_min == 'min':
+			for key, value in decision_in_solution.items():
+				all_dec_final_value[key]=final_tableau.table[0][value]
+			for key, value in slack_variables.items():
+				all_const_final_value[key]=final_tableau.table[0][value]
+
+		decision_result=list()
+		for i, key in enumerate(all_dec_final_value):
+		# for key, value in all_dec_final_value.items():
+			line=list()
+			line.append(key+ '\t    |')
+			line.append(str(all_dec_final_value[key])+'\t    |')
+			line.append('0' + '\t    |') # custo reduzido
+			line.append(str(self.decision_var[i])+ '\t    |')
+			# Acrescimo
+			line.append(str(0.0)+'\t     |')
+			# Decrescimo
+			line.append(str(0.0)+'\t        |')
+			decision_result.append(line)
+
+		constraint_resul = list()
+		for i, key in enumerate(all_const_final_value):
+			line=list()
+			line.append(key+ '\t    |')      # Constraint label
+			line.append(str(all_const_final_value[key])+'\t    |') # Constraint value
+			line.append(str(self.shadow_price[key]) + '\t    |') # shadow price | preço sombra
+			line.append(str(results[i][0])+ '\t    |') # Result ( 'b' )
+			# Acrescimo
+			line.append(str(self.constraint_limits[key][0])+'\t     |') # ToDo Implement ==> Not Done yet
+			# Decrescimo
+			line.append(str(self.constraint_limits[key][1])+'\t        |') # ToDo Implement ==> Not Done yet
+			constraint_resul.append(line)
+
+
 
 		clear_screen()
-		width_column = 90
+		width_column = 97
+		print('\n')
 		print('=' * width_column, '\n\t\tR E L A T Ó R I O\tS E N S I B I L I D A D E')
 		print('-' * width_column)
-		print('Var Decisao | \tFinal Value |\tCusto Reduz | Coef.Objetivo | Acrs. Possível | Decres. Possível |')
+		print('Var Decisao |\tValor Final |\tCusto Reduz | Coef.Objetivo | Acrs. Possível | Decres. Possível |')
+		for val in decision_result:
+			print('\t'.join(map(str, val)))
 		# For valores aqui
 		print('-' * width_column)
-		print('-' * width_column, '\n\nRestrições')
+		print('\nRestrições')
 		print('-' * width_column)
-		print(' Constraint  | \tFinal Value |\tShadow Price  | Rest. Lado Dir | Acrs. Possível | Decres. Possível |')
-		for i in range(len(self.constraints)):
-			print('\tC{}\t'.format(i+1), end='')
-			# ToDo falta extrair slack
-			print('{:.2f}-slack\t'.format(self.result[i]), end=' ')
-			# print('{:.2f}'.format(self.shadow_price[i]), end=' ')
-			print('{:.2f}'.format(self.result[i]), end='')
-			# ToDo falta calcular
-			print('{:.2f}'.format(00000), end='')
-			# ToDo falta calcular
-			print('{:.2f}'.format(00000))
+		print(' Restrição  |\tValor Final |\tPreço Sombra | Result. (LD) | Acrs. Possível | Decres. Possível |')
+		for val in constraint_resul:
+			print('\t'.join(map(str, val)))
+		print('-' * width_column)
 
-		# print('Var Decisao\tValor\tPreço Somb\tRest. Lado Dir\tAcrs. Possível\tDecres. Possível')
 
 
 	def convert_gaussian(self, tableau):
@@ -414,7 +503,7 @@ class PyplexSolver():
 		col_elem_name =  tableau.table_columns_names
 		# Get the index of all variabels in the row
 		vars_row = {row_elem_name[i]: i for i, s in enumerate(row_elem_name) if s != 'Z'}
-		# Get the index of all variabels in the columns
+		# Get the index of all variables in the columns
 		vars_col  = {col_elem_name[i]: i for i, s in enumerate(col_elem_name) if s != 'b'}
 
 		# Build a dictionary, where the key is the row label, and the value is the element (aij)
@@ -525,8 +614,6 @@ class PyplexSolver():
 		# # Check if all elements in this line is 0
 		# indexes = [i for i, x in enumerate(coef_z_line) if x != 0]
 
-
-
 	def read_user_values(self):
 		values = dict()
 		cont_read = True
@@ -604,10 +691,11 @@ def clear_screen():
 
 def welcome_message():
 	clear_screen()
-	print('=' * 30)
-	print('\tP Y P L E X')
+	col_width = 54
+	print('=' * col_width)
+	print('\t\tP Y P L E X')
 	# print('\')
-	print('=' * 30)
+	print('=' * col_width)
 
 
 def print_equation_options():
