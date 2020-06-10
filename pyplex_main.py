@@ -501,7 +501,7 @@ class PyplexSolver():
 		print('-' * width_column)
 		print('\nRestrições')
 		print('-' * width_column)
-		print(' Restrição  |\tValor Final |\tPreço Sombra | Result. (LD) | Acrs. Possível | Decres. Possível |')
+		print(' Restrição  |\tValor Final |\tPreço Sombra | Result. (LD) | Val. Acrésimo  | Valor Decréssimo |')
 		for val in constraint_resul:
 			print('\t'.join(map(str, val)))
 		print('-' * width_column)
