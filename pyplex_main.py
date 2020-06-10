@@ -68,6 +68,7 @@ class PyplexSolver():
 		self.verbose = verb
 		self.shadow_price = list()
 		self.constraint_limits = dict()
+		self.decision_limits = dict()
 
 		self.sensi_analysis_iter = list()
 
@@ -284,6 +285,7 @@ class PyplexSolver():
 			tableau_list.append(new_tableau)
 			i += 1
 		self.set_shadow_price(new_tableau)
+		self.set_decision_limits(tableau_list[0], tableau_list[-1])
 		self.set_constraint_limits(new_tableau)
 		return tableau_list # list of all iteraction
 
@@ -348,11 +350,6 @@ class PyplexSolver():
 			print('Minimization problem')
 		print('\nOptimal Solution: ')
 		self.print_optimal_solution()
-
-		# shadow_price = self.extract_shadow_price()
-		# print('\nShadow price: \t'.join(shadow_price))
-
-		# ToDo Vê uma forma se vai perguntar se deseja imprimir os resultados agora
 		self.print_sensitivity_analysis_report()
 
 
@@ -382,8 +379,6 @@ class PyplexSolver():
 		S_as = last_tableau.table[1:, min(y_as_ind):-1]
 		delta_b = np.full((len(y_as_ind),1),0)
 
-
-
 		for i, key in enumerate(const_lables_n_position):
 			limit_values = list()
 			delta_b[i][0] = 1
@@ -391,11 +386,28 @@ class PyplexSolver():
 			result_b = np.zeros((len(y_as_ind),1))
 			for k, Bi in enumerate(S_Deltab):
 				result_b[k] = b[k][0] / Bi
+				result_b[k] += self.result[i]
 			limit_values.append(np.max(result_b))
-			limit_values.append(np.min(result_b))
+			limit_values.append(np.min(result_b[result_b>0])) # Miminum greather then 0
 			delta_b = np.full((len(y_as_ind), 1), 0)
 			self.constraint_limits[key] = limit_values
 
+	def set_decision_limits(self, first_tableau, last_tableau):
+		"""
+			set_decision_limits: Sets in a dictionary the limits for decision coef. Ci
+			decision_limits['c1']=(01,2)
+			decision_limits['c2']=(3,9)
+			...
+			decision_limits['cn']=(x,y)
+			ci <= y* Ai
+		"""
+		y_as_ind = {i for i, s in enumerate(last_tableau.table_columns_names) if 'S' in s}
+		y_as = last_tableau.table[0, min(y_as_ind):-1]
+
+		for k in range(len(self.decision_var)):
+			Ai = first_tableau.table[1:, k:k+1]
+			key='X{}'.format(k+1)
+			self.decision_limits[key] = np.dot(y_as, Ai)
 
 
 	def print_sensitivity_analysis_report(self):
@@ -454,12 +466,12 @@ class PyplexSolver():
 			line=list()
 			line.append(key+ '\t    |')
 			line.append(str(all_dec_final_value[key])+'\t    |')
-			line.append('0' + '\t    |') # custo reduzido
+			line.append('-' + '\t    |') # custo reduzido
 			line.append(str(self.decision_var[i])+ '\t    |')
 			# Acrescimo
-			line.append(str(0.0)+'\t     |')
+			line.append(str(self.decision_limits[key][0])+'\t     |')
 			# Decrescimo
-			line.append(str(0.0)+'\t        |')
+			line.append('---'+'\t        |')
 			decision_result.append(line)
 
 		constraint_resul = list()
@@ -470,9 +482,9 @@ class PyplexSolver():
 			line.append(str(self.shadow_price[key]) + '\t    |') # shadow price | preço sombra
 			line.append(str(results[i][0])+ '\t    |') # Result ( 'b' )
 			# Acrescimo
-			line.append(str(self.constraint_limits[key][0])+'\t     |') # ToDo Implement ==> Not Done yet
+			line.append(str(self.constraint_limits[key][0])+'\t     |')
 			# Decrescimo
-			line.append(str(self.constraint_limits[key][1])+'\t        |') # ToDo Implement ==> Not Done yet
+			line.append(str(self.constraint_limits[key][1])+'\t        |')
 			constraint_resul.append(line)
 
 
@@ -501,7 +513,7 @@ class PyplexSolver():
 
 		row_elem_name =  tableau.table_rows_names
 		col_elem_name =  tableau.table_columns_names
-		# Get the index of all variabels in the row
+		# Get the index of all variables in the row
 		vars_row = {row_elem_name[i]: i for i, s in enumerate(row_elem_name) if s != 'Z'}
 		# Get the index of all variables in the columns
 		vars_col  = {col_elem_name[i]: i for i, s in enumerate(col_elem_name) if s != 'b'}
@@ -511,7 +523,7 @@ class PyplexSolver():
 		elements = dict()
 		selected_cols=list()
 		for key in vars_row:
-			elements[vars_row[key]]=(vars_row[key], vars_col[key])
+			elements[vars_row[key]] = (vars_row[key], vars_col[key])
 			selected_cols.append(vars_col[key])
 
 		# Scanning the table for the elements we need to turn into 1
@@ -519,7 +531,7 @@ class PyplexSolver():
 			pivot_element = tableau.table[value]
 			if pivot_element != 1:
 				new_row = tableau.table[key]
-				pivot_element = np.full((1,len(new_row)),tableau.table[value],dtype=float)
+				pivot_element = np.full((1,len(new_row)), tableau.table[value],dtype=float)
 				new_row = np.divide(new_row, pivot_element)
 				converted_tableau.table[key] = new_row
 
@@ -528,17 +540,17 @@ class PyplexSolver():
 		# example: 1: (2,3)
 		for key, value in elements.items():
 			selec_col_ind = value[1]
-			col_elements = converted_tableau.table[:,selec_col_ind]  # value[1] is the column from aij element
-			pivot_line = converted_tableau.table[value[0],:]  # value[1] is the column from aij element
+			col_elements = converted_tableau.table[:, selec_col_ind]  # value[1] is the column from aij element
+			pivot_line = converted_tableau.table[value[0], :]  # value[1] is the column from aij element
 			for index, col_value in np.ndenumerate(col_elements):
 				# check is its the pivot value
-				if value == (index[0],selec_col_ind):
+				if value == (index[0], selec_col_ind):
 					continue
 				# Only if the column value is not 0 or 1
 				if col_value not in (0,1):
 					old_line = converted_tableau.table[index]
 					multi_element = np.full(len(old_line), col_value, dtype=float)
-					new_line = old_line - np.multiply(multi_element,pivot_line)
+					new_line = old_line - np.multiply(multi_element, pivot_line)
 					converted_tableau.table[index] = new_line
 
 		return converted_tableau
